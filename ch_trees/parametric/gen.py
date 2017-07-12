@@ -1178,6 +1178,6 @@ def construct(params, seed=0, render=False, out_path=None):
         bpy.data.scenes['Scene'].render.filepath = out_path
         bpy.ops.render.render(write_still=True)
 
-#mod = __import__('ch_trees.parametric.tree_params.branch_struct', fromlist=[''])
+#mod = __import__('ch_trees.parametric.tree_params.quaking_aspen', fromlist=[''])
 #reload(mod)
 #construct(mod.params)
