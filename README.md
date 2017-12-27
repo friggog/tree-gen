@@ -16,5 +16,3 @@ If you want to try out the code as is:
 * You can change the `quaking_aspen` bit inside `construct(...)` to generate different types of trees - see `.../parametric/tree_params` and `.../lsystems/sys_defs` for available presets. You can also edit/create new tree types.
 
 (apologies for such a protracted process, this is why I'd love to incorporate it into an actual plugin - hopefully I or someone else will get around to this soon)
-
-[CC BY-NC-SA 3.0 License](https://creativecommons.org/licenses/by-nc-sa/3.0/)
