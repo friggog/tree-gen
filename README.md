@@ -3,7 +3,7 @@ Procedural generation of tree models in blender
 
 ![Tree Samples](http://chewitt.me/Folio/Trees.jpg)
 
-Read the write up [here](http://chewitt.me/CTH-Dissertation-2017.pdf).
+Read the write up [here](http://chewitt.me/Papers/CTH-Dissertation-2017.pdf).
 
 I'd love to develop this into a fully usable blender plugin but don't currently have the time, if anyone would like to I'd very much support this.
 
