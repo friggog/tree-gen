@@ -361,7 +361,7 @@ class LSystem(object):
         update_log('\nMaking Leaves\n')
         
         # Start loading spinner
-        #windman.progress_begin(0, len(leaves_array))
+        windman.progress_begin(0, len(leaves_array))
         
         start_time = time()
         
@@ -376,8 +376,8 @@ class LSystem(object):
         blossom_count = 0
         
         for ind, leaf in enumerate(leaves_array):
-            #if ind % 100 == 0:
-            #    windman.progress_update(ind)
+            if ind % 500 == 0:
+                windman.progress_update(ind / 100)
                 
             update_log('\r-> {} leaves made, {} blossoms made'.format(leaf_count, blossom_count))
 
@@ -415,7 +415,7 @@ class LSystem(object):
         
         update_log('\nMade %i leaves and %i blossoms in %f seconds\n' % (leaf_count, blossom_count, time() - start_time))
         
-        # windman.progress_end()
+        windman.progress_end()
 
     def make_leaf(self, leaf, base_leaf_shape, index, verts_array, faces_array):
         """get vertices and faces for leaf and append to appropriate arrays"""

@@ -144,7 +144,6 @@ class Tree(object):
     base_length = 0
     split_num_error = [0, 0, 0, 0, 0, 0, 0]
     tree_obj = None
-    stem_count = 0
     trunk_length = 0
     
     def __init__(self, param):
@@ -244,7 +243,7 @@ class Tree(object):
             self.make_stem(turtle, Stem(0, trunk))
 
         b_time = time() - start_time
-        update_log('\Stems made: %i in %f seconds\n' % (self.stem_count, b_time))
+        update_log('\nStems made: %i in %f seconds\n' % (self.stem_index, b_time))
 
         curve_points = 0
         for spline in self.branches_curve.splines:
@@ -252,8 +251,6 @@ class Tree(object):
             
         # TODO do this better, could calc vertices by multiplying by bevel res and curve res?
         update_log('Curve points: %i\n' % curve_points)
-
-        windman.progress_end()
         
         return b_time
 
@@ -283,8 +280,8 @@ class Tree(object):
         
         for ind, leaf in enumerate(self.leaves_array):
             # Update loading spinner periodically
-            if ind % 100 == 0:
-                windman.progress_update(ind)
+            if ind % 500 == 0:
+                windman.progress_update(ind / 100)
                 
             update_log('\r-> {} leaves made, {} blossoms made'.format(leaf_index, blossom_index))
             
@@ -308,6 +305,7 @@ class Tree(object):
             if leaf_uv:
                 leaves.uv_textures.new("leavesUV")
                 uv_layer = leaves.uv_layers.active.data
+                
                 for seg_ind in range(int(len(leaf_faces) / len(base_leaf_shape[1]))):
                     for vert_ind, vert in enumerate(leaf_uv):
                         uv_layer[seg_ind * len(leaf_uv) + vert_ind].uv = vert
