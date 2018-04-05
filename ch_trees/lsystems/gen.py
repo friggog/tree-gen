@@ -7,11 +7,8 @@ from time import time
 def construct(modname):
     """Construct the tree"""
     start_time = time()
-    print('** Generating Tree **')
+    print('\n** Generating Tree **')
     mod = __import__(modname, fromlist=[''])
     reload(mod)
     mod.system().parse()
-    print('Tree generated in %f seconds' % (time() - start_time))
-
-
-# construct('ch_trees.lsystems.sys_defs.quaking_aspen')
+    print('\nTree generated in %f seconds\n' % (time() - start_time))
