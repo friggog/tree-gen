@@ -10,8 +10,12 @@ from ch_trees import lsystems
 
 # ------
 def _get_tree_types():
+    # Scan the the ch_trees addon folder for parameters and definitions,
+    # then return two EnumProperty objects for use as the drop-down tree selector
+    # (one for parametric, one for L-system)
+    
     addon_path = None
-
+    
     for path in addon_utils.paths():
         if 'ch_trees' in os.listdir(path):
             addon_path = path
@@ -36,6 +40,7 @@ def _get_tree_types():
         quaking_aspen = modules[0]
         options = []
         for module, title in zip(modules, titles):
+            # Use quaking aspen as the default for the drop-down
             if title == 'Quaking Aspen':
                quaking_aspen = module
                
@@ -55,9 +60,9 @@ class TreeGen(bpy.types.Operator):
     bl_options  = {'REGISTER', 'UNDO'}
     
     # Empty names remove labels from input boxes
-    bpy.types.Scene.seed_input              = bpy.props.IntProperty(name="", default=0, min=0, max=9999999)
-    bpy.types.Scene.render_input            = bpy.props.BoolProperty(name="Render", default=False)
-    bpy.types.Scene.out_path_input          = bpy.props.StringProperty(name="", default=os.path.sep.join((os.path.expanduser('~'), 'treegen_render.png')))
+    bpy.types.Scene.seed_input      = bpy.props.IntProperty(name="", default=0, min=0, max=9999999)
+    bpy.types.Scene.render_input    = bpy.props.BoolProperty(name="Render", default=False)
+    bpy.types.Scene.out_path_input  = bpy.props.StringProperty(name="", default=os.path.sep.join((os.path.expanduser('~'), 'treegen_render.png')))
     
     _gen_methods = (('parametric', 'Parametric', 'Parametric mode'),
                     ('lsystem', 'L-System', 'L-System mode'))
@@ -66,28 +71,23 @@ class TreeGen(bpy.types.Operator):
 
     # ---
     def execute(self, context):
-        scene = context.scene
+        # "Generate Tree" button callback
         
-        mod_name = scene.para_tree_type_input if scene.tree_gen_method_input == 'parametric' else scene.lsys_tree_type_input
-        
-        params = {
-            'seed':      scene.seed_input,
-            'render':    scene.render_input,
-            'out_path':  scene.out_path_input,
-            'mod_name':  mod_name
-        }
-        
-        thread = threading.Thread(target=self._construct, kwargs=params)
+        thread = threading.Thread(target=self._construct, kwargs={'scene': context.scene})
         thread.start()
         
         return {'FINISHED'}
 
     # ---
-    def _construct(self, seed, render, out_path, mod_name):
+    def _construct(self, scene):
+        # The generator's main thread. Also handles conditional logic for generation method selection.
+        
+        mod_name = scene.para_tree_type_input if scene.tree_gen_method_input == 'parametric' else scene.lsys_tree_type_input
+        
         if mod_name.startswith('ch_trees.parametric'):
             mod = __import__(mod_name, fromlist=[''])
             imp.reload(mod)
-            parametric.gen.construct(mod.params, seed, render, out_path)
+            parametric.gen.construct(mod.params, scene.seed_input, scene.render_input, scene.out_path_input)
             
         else:
             lsystems.gen.construct(mod_name)
@@ -95,6 +95,7 @@ class TreeGen(bpy.types.Operator):
     
 # ------
 class TreeGenPanel(bpy.types.Panel):
+    """Provides a user interface for TreeGen"""
     
     bl_label = "TreeGen Configuration"
     bl_idname = "OBJECT_PT_treegen"
@@ -109,6 +110,7 @@ class TreeGenPanel(bpy.types.Panel):
         scene  = context.scene
         
         def label_row(label, prop, separator=True, one_row=False):
+            # Helper method to shorten the UI code
             row = layout.row()
             
             if one_row or not label:
