@@ -55,19 +55,20 @@ class TreeGen(bpy.types.Operator):
     bl_options  = {'REGISTER', 'UNDO'}
     
     # Empty names remove labels from input boxes
-    bpy.types.Scene.seed_input      = bpy.props.IntProperty(name="", default=0, min=0, max=9999999)
-    bpy.types.Scene.render_input    = bpy.props.BoolProperty(name="", default=False)
-    bpy.types.Scene.out_path_input  = bpy.props.StringProperty(name="", default=os.path.sep.join((os.path.expanduser('~'), 'treegen_render.png')))
+    bpy.types.Scene.seed_input              = bpy.props.IntProperty(name="", default=0, min=0, max=9999999)
+    bpy.types.Scene.render_input            = bpy.props.BoolProperty(name="Render", default=False)
+    bpy.types.Scene.out_path_input          = bpy.props.StringProperty(name="", default=os.path.sep.join((os.path.expanduser('~'), 'treegen_render.png')))
     
-    _tree_type_options = (('parametric', 'Parametric', 'Parametric mode'), ('lsystem', 'L-System', 'L-System mode'))
-    bpy.types.Scene.tree_gen_mode_input = bpy.props.EnumProperty(name="", items=_tree_type_options, default='parametric')
+    _gen_methods = (('parametric', 'Parametric', 'Parametric mode'),
+                    ('lsystem', 'L-System', 'L-System mode'))
+    bpy.types.Scene.tree_gen_method_input = bpy.props.EnumProperty(name="", items=_gen_methods, default='parametric')
     bpy.types.Scene.para_tree_type_input, bpy.types.Scene.lsys_tree_type_input = _get_tree_types()
 
     # ---
     def execute(self, context):
         scene = context.scene
         
-        mod_name = scene.para_tree_type_input if scene.tree_gen_mode_input == 'parametric' else scene.lsys_tree_type_input
+        mod_name = scene.para_tree_type_input if scene.tree_gen_method_input == 'parametric' else scene.lsys_tree_type_input
         
         params = {
             'seed':      scene.seed_input,
@@ -91,6 +92,7 @@ class TreeGen(bpy.types.Operator):
         else:
             lsystems.gen.construct(mod_name)
 
+    
 # ------
 class TreeGenPanel(bpy.types.Panel):
     
@@ -100,41 +102,39 @@ class TreeGenPanel(bpy.types.Panel):
     bl_region_type = 'TOOLS'
     bl_category = 'TreeGen'
     bl_context = (("objectmode"))
-
-    param_gen_rows = [
-        ('Seed', 'seed_input'),
-        ('Render', 'render_input'),
-        ('Output path', 'out_path_input')
-    ]
-    
-    messages = []
     
     # ---
     def draw(self, context):
         layout = self.layout
         scene  = context.scene
         
-        def new_row():
-            layout.separator()
-            return layout.row()
-
-        row = layout.row()
-        row.label('Mode')
-        row.prop(scene, 'tree_gen_mode_input')
-        
-        mode = scene.tree_gen_mode_input
-        
-        row = new_row()
-        row.label('Tree type')
-        row.prop(scene, 'para_tree_type_input' if mode == 'parametric' else 'lsys_tree_type_input')
-
-        if mode == 'parametric':
-            layout.separator()
+        def label_row(label, prop, separator=True, one_row=False):
+            row = layout.row()
             
-            for label, name in self.param_gen_rows:
-                row = layout.row()
+            if one_row or not label:
+                row.prop(scene, prop)
+                if label: row.label(label)
+                
+            else:
                 row.label(label)
-                row.prop(scene, name)
+                row = layout.row()
+                row.prop(scene, prop)
+                
+            if separator: layout.separator()
         
-        row = new_row()
+        
+        label_row('Method:', 'tree_gen_method_input')
+
+        mode = scene.tree_gen_method_input
+        label_row('Tree Type:', 'para_tree_type_input' if mode == 'parametric' else 'lsys_tree_type_input')
+        
+        if mode == 'parametric': 
+            label_row('Seed:', 'seed_input')
+            
+            label_row('', 'render_input', False, True)
+            if scene.render_input:
+                label_row('Render output path:', 'out_path_input')
+            
+        layout.separator()
+        row = layout.row()
         layout.operator(TreeGen.bl_idname)
