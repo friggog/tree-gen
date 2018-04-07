@@ -3,6 +3,7 @@ import addon_utils
 
 import threading
 import imp
+import sys
 import os
 
 from ch_trees import parametric
