@@ -1,6 +1,7 @@
 """ CAMBRIDGE OAK """
 params = {
     'shape' : 3,
+    'base_size' : 0.2,
     'g_scale' : 20,
     'g_scale_v' : 4,
     'levels' : 4,
@@ -8,7 +9,6 @@ params = {
     'ratio_power' : 2,
     'flare' : 0.5,
     'base_splits' : 1,
-    'base_size' :      [0.2,   0,      0,       0],
     'down_angle' :     [-0,    60,     60,     45],
     'down_angle_v' :   [-0,    -30,    30,     10],
     'rotate' :         [-0,    110,    110,   110],
