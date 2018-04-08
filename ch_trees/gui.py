@@ -1,6 +1,7 @@
 import bpy
 import addon_utils
 
+import traceback
 import threading
 import imp
 import sys
@@ -15,27 +16,18 @@ def _get_tree_types():
     # then return two EnumProperty objects for use as the drop-down tree selector
     # (one for parametric, one for L-system)
     
-    addon_path = None
+    addon_path_parts = __file__.split(os.path.sep)[:-1]
+    addon_name = addon_path_parts[-1]
+    addon_path = os.path.sep.join(addon_path_parts)
     
-    for path in addon_utils.paths():
-        if 'ch_trees' in os.listdir(path):
-            addon_path = path
-            break
-    
-    if addon_path is None:
-        sys.stdout.write('TreeGen :: WARNING: Could not find addon installation folder\n')
-        sys.stdout.flush()
-        return None, None
-    
-    root_path_parts = [['ch_trees', 'parametric', 'tree_params'],
-                       ['ch_trees', 'lsystems', 'sys_defs']]
+    module_path_parts = [['parametric', 'tree_params'], ['lsystems', 'sys_defs']]
     
     enums = []
-    for rpparts in root_path_parts:
-        path  = os.path.join(addon_path, *rpparts)
-        files = [f.split('.')[0] for f in os.listdir(path) if os.path.isfile(path + '/' + f)]
+    for modparts in module_path_parts:
+        path  = os.path.join(addon_path, *modparts)
+        files = [f.split('.')[0] for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]
         
-        modules  = ['{}.{}'.format('.'.join(rpparts), f) for f in files]
+        modules  = ['{}.{}.{}'.format(addon_name, '.'.join(modparts), f) for f in files]
         titles   = [f.replace('_', ' ').title() for f in files]
         
         quaking_aspen = modules[0]
@@ -101,12 +93,17 @@ class TreeGen(bpy.types.Operator):
             sys.stdout.write('Simplifying tree branch geometry. Blender will appear to crash; be patient.\n')
             sys.stdout.flush()
             
-            utilities.simplify_branch_geometry(context)
+            # Catch exceptions and print them as strings
+            # This will hopefully reduce random crashes
+            try:
+                utilities.simplify_branch_geometry(context)
+            except Exception as ex:
+                sys.stdout.write('\n{}\n'.format(traceback.print_exec()))
+                sys.stdout.flush()
             
             sys.stdout.write('Geometry simplification complete\n\n')
             sys.stdout.flush()
 
-    
 # ------
 class TreeGenPanel(bpy.types.Panel):
     """Provides a user interface for TreeGen"""
@@ -147,12 +144,12 @@ class TreeGenPanel(bpy.types.Panel):
         if mode == 'parametric': 
             label_row('Seed:', 'seed_input')
 
-            label_row('', 'simplify_geometry_input', True, True)
-
             label_row('', 'render_input', False, True)
             if scene.render_input:
                 label_row('Render output path:', 'out_path_input')
-            
+        
+        label_row('', 'simplify_geometry_input', True, True)
+                
         layout.separator()
         row = layout.row()
         layout.operator(TreeGen.bl_idname)
