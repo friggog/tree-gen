@@ -144,10 +144,10 @@ class TreeGenPanel(bpy.types.Panel):
         mode = scene.tree_gen_method_input
         label_row('Tree Type:', 'para_tree_type_input' if mode == 'parametric' else 'lsys_tree_type_input')
         
+        label_row('', 'simplify_geometry_input', True, True)
+            
         if mode == 'parametric': 
             label_row('Seed:', 'seed_input')
-
-            label_row('', 'simplify_geometry_input', True, True)
 
             label_row('', 'render_input', False, True)
             if scene.render_input:
