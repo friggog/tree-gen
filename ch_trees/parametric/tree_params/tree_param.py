@@ -50,13 +50,14 @@ class TreeParam(object):
     def __init__(self, params):
         """initialize parameters from dictionary representation"""
         
-        # Ensure no methods are overwritten (prevent monkey-business)
         filtered = {}
         for k, v in params.items():
             try:
+                # Ensure no methods are overwritten (prevent monkey-business)
                 if str(type(self.__getattribute__(k))) != "<class 'method'>":
                     filtered[k] = v
-
+            
+            # Catch typos
             except AttributeError as ex:
                 sys.stdout.write('TreeGen :: Warning: Unrecognized name in configuration "{}"'.format(k))
                 sys.stdout.flush()
