@@ -3,6 +3,7 @@ import addon_utils
 
 import threading
 import imp
+import sys
 import os
 
 from ch_trees import parametric
@@ -60,9 +61,10 @@ class TreeGen(bpy.types.Operator):
     bl_options  = {'REGISTER', 'UNDO'}
     
     # Empty names remove labels from input boxes
-    bpy.types.Scene.seed_input      = bpy.props.IntProperty(name="", default=0, min=0, max=9999999)
-    bpy.types.Scene.render_input    = bpy.props.BoolProperty(name="Render", default=False)
-    bpy.types.Scene.out_path_input  = bpy.props.StringProperty(name="", default=os.path.sep.join((os.path.expanduser('~'), 'treegen_render.png')))
+    bpy.types.Scene.seed_input              = bpy.props.IntProperty(name="", default=0, min=0, max=9999999)
+    bpy.types.Scene.simplify_geometry_input = bpy.props.BoolProperty(name="Simplify branch geometry", default=False)
+    bpy.types.Scene.render_input            = bpy.props.BoolProperty(name="Render", default=False)
+    bpy.types.Scene.out_path_input          = bpy.props.StringProperty(name="", default=os.path.sep.join((os.path.expanduser('~'), 'treegen_render.png')))
     
     _gen_methods = (('parametric', 'Parametric', 'Parametric mode'),
                     ('lsystem', 'L-System', 'L-System mode'))
@@ -73,15 +75,16 @@ class TreeGen(bpy.types.Operator):
     def execute(self, context):
         # "Generate Tree" button callback
         
-        thread = threading.Thread(target=self._construct, kwargs={'scene': context.scene})
+        thread = threading.Thread(target=self._construct, kwargs={'context': context})
         thread.start()
         
         return {'FINISHED'}
 
     # ---
-    def _construct(self, scene):
+    def _construct(self, context):
         # The generator's main thread. Also handles conditional logic for generation method selection.
         
+        scene = context.scene
         mod_name = scene.para_tree_type_input if scene.tree_gen_method_input == 'parametric' else scene.lsys_tree_type_input
         
         if mod_name.startswith('ch_trees.parametric'):
@@ -91,6 +94,17 @@ class TreeGen(bpy.types.Operator):
             
         else:
             lsystems.gen.construct(mod_name)
+            
+        if scene.simplify_geometry_input:
+            from . import utilities
+            
+            sys.stdout.write('Simplifying tree branch geometry. Blender will appear to crash; be patient.\n')
+            sys.stdout.flush()
+            
+            utilities.simplify_branch_geometry(context)
+            
+            sys.stdout.write('Geometry simplification complete\n\n')
+            sys.stdout.flush()
 
     
 # ------
@@ -132,7 +146,9 @@ class TreeGenPanel(bpy.types.Panel):
         
         if mode == 'parametric': 
             label_row('Seed:', 'seed_input')
-            
+
+            label_row('', 'simplify_geometry_input', True, True)
+
             label_row('', 'render_input', False, True)
             if scene.render_input:
                 label_row('Render output path:', 'out_path_input')
