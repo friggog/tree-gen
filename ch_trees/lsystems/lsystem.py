@@ -16,6 +16,7 @@ windman = bpy.context.window_manager
 
 # ----- GENERAL FUNCTIONS ----- #
 
+
 def update_log(msg):
     if __console_logging__:
         sys.stdout.write(msg)
@@ -106,7 +107,6 @@ class LSystem(object):
                  blossom_rate=0,
                  blossom_shape=0,
                  blossom_scale=0):
-                 
         """initialise L-system with specified parameters"""
         self.data = axiom
         self.rules = rules
@@ -151,17 +151,17 @@ class LSystem(object):
 
     def parse(self):
         """parse l-system and generate model"""
-            
+
         try:
             self.tree_obj = bpy.data.objects.new('Tree', None)
         except AttributeError:
             raise Exception('TreeGen :: WARNING: lsystem generation was attempted before Blender was ready')
-            
+
         bpy.context.scene.objects.link(self.tree_obj)
         bpy.context.scene.objects.active = self.tree_obj
-        
+
         update_log('\nParsing System\n')
-        
+
         start_time = time()
 
         # set up curve object
@@ -191,7 +191,7 @@ class LSystem(object):
         valid_branch = False  # keeps track of whether branch contains any F
         # at_end_of_inv_branch = False
         prev_leaf_ang = rand_in_range(0, 360)
-        
+
         for ind, dat in enumerate(self.data):
             update_log('\r-> {} of {} symbols parsed'.format(ind + 1, len(self.data)))
 
@@ -285,7 +285,7 @@ class LSystem(object):
         curve_points = 0
         for spline in curve.splines:
             curve_points += len(spline.bezier_points)
-            
+
         # TODO do this better, could calc vertices by multiplying by bevel res and curve res?
         update_log('Curve points: %i\n' % curve_points)
 
@@ -354,17 +354,17 @@ class LSystem(object):
 
     def create_leaf_mesh(self, leaves_array):
         """Create leaf mesh for tree"""
-        
+
         if len(leaves_array) <= 0:
             return
-            
+
         update_log('\nMaking Leaves\n')
-        
+
         # Start loading spinner
         windman.progress_begin(0, len(leaves_array))
-        
+
         start_time = time()
-        
+
         # go through global leaf array populated in branch making phase and add polygons to mesh
         base_leaf_shape = Leaf.get_shape(self.leaf_shape, 1, self.leaf_scale, self.leaf_scale_x)
         base_blossom_shape = Leaf.get_shape(self.blossom_shape, 1, self.blossom_scale, 1)
@@ -374,11 +374,11 @@ class LSystem(object):
         blossom_verts = []
         blossom_faces = []
         blossom_count = 0
-        
+
         for ind, leaf in enumerate(leaves_array):
             if ind % 500 == 0:
                 windman.progress_update(ind / 100)
-                
+
             update_log('\r-> {} leaves made, {} blossoms made'.format(leaf_count, blossom_count))
 
             if random() < self.blossom_rate:
@@ -412,9 +412,9 @@ class LSystem(object):
             bpy.context.scene.objects.link(blossom_obj)
             blossom.from_pydata(blossom_verts, (), blossom_faces)
             # blossom.validate()
-        
+
         update_log('\nMade %i leaves and %i blossoms in %f seconds\n' % (leaf_count, blossom_count, time() - start_time))
-        
+
         windman.progress_end()
 
     def make_leaf(self, leaf, base_leaf_shape, index, verts_array, faces_array):

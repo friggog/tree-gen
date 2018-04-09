@@ -7,7 +7,7 @@ params = {
     'ratio': 0.015,
     'ratio_power': 1.3,
     'flare': 0.3,
-    'bse_size': [0.25, 0.02, 0.02, 0.02],
+    'base_size': [0.25, 0.02, 0.02, 0.02],
     'down_angle': [-0, 60, 70, 30],
     'down_angle_v': [-0, -50, 30, 15],
     'rotate': [-0, 70, 70, 120],
