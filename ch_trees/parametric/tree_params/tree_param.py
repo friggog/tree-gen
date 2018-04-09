@@ -2,6 +2,7 @@
 
 import sys
 
+
 class TreeParam(object):
     """parameter list for default tree (aspen)"""
     shape = 7
@@ -49,22 +50,22 @@ class TreeParam(object):
 
     def __init__(self, params):
         """initialize parameters from dictionary representation"""
-        
+
         filtered = {}
         for k, v in params.items():
             try:
                 # Ensure no methods are overwritten (prevent monkey-business)
                 if str(type(self.__getattribute__(k))) != "<class 'method'>":
                     filtered[k] = v
-            
+
             # Catch typos
             except AttributeError as ex:
                 sys.stdout.write('TreeGen :: Warning: Unrecognized name in configuration "{}"'.format(k))
                 sys.stdout.flush()
-            
+
         # Copy parameters into instance
         self.__dict__.update(filtered)
-        
+
         # Specialized parameter formatting
         for var in ['shape', 'levels', 'floor_splits']:
             if var in filtered:
@@ -72,39 +73,38 @@ class TreeParam(object):
 
         if 'base_splits' in filtered:
             self.base_splits = int(filtered['base_splits'])
-        
 
     def param_to_arr(self):
         """Convert usable parameters to array output for use with scikit-learn"""
-        
+
         return [
-               self.g_scale,
-               self.g_scale_v,
-               self.levels,
-               self.ratio,
-               self.ratio_power,
-               self.flare,
-               self.floor_splits,
-               self.base_splits,
-               *self.base_size,
-               *self.down_angle[1:],
-               *self.down_angle_v[1:],
-               *self.rotate[1:],
-               *self.rotate_v[1:],
-               *self.branches[1:],
-               *self.length,
-               *self.length_v,
-               *self.taper,
-               *self.seg_splits,
-               *self.split_angle,
-               *self.split_angle_v,
-               *self.curve_res,
-               *self.curve,
-               *self.curve_back,
-               *self.curve_v,
-               *self.bend_v[1:],
-               *self.branch_dist[1:],
-               *self.radius_mod,
-               abs(self.leaf_blos_num),
-               *self.tropism
-            ]
+            self.g_scale,
+            self.g_scale_v,
+            self.levels,
+            self.ratio,
+            self.ratio_power,
+            self.flare,
+            self.floor_splits,
+            self.base_splits,
+            *self.base_size,
+            *self.down_angle[1:],
+            *self.down_angle_v[1:],
+            *self.rotate[1:],
+            *self.rotate_v[1:],
+            *self.branches[1:],
+            *self.length,
+            *self.length_v,
+            *self.taper,
+            *self.seg_splits,
+            *self.split_angle,
+            *self.split_angle_v,
+            *self.curve_res,
+            *self.curve,
+            *self.curve_back,
+            *self.curve_v,
+            *self.bend_v[1:],
+            *self.branch_dist[1:],
+            *self.radius_mod,
+            abs(self.leaf_blos_num),
+            *self.tropism
+        ]
