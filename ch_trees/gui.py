@@ -9,8 +9,6 @@ import os
 from ch_trees import parametric
 from ch_trees import lsystems
 
-# ------
-
 
 def _get_tree_types():
     # Scan the the ch_trees addon folder for parameters and definitions,
@@ -23,12 +21,15 @@ def _get_tree_types():
 
     module_path_parts = [['parametric', 'tree_params'], ['lsystems', 'sys_defs']]
 
+    # Build the drop-down menus
     enums = []
     for modparts in module_path_parts:
         path = os.path.join(addon_path, *modparts)
         files = [f.split('.')[0] for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]
 
+        # ex: ['ch_trees.parametric.tree_params.quaking_aspen', ...]
         modules = ['{}.{}.{}'.format(addon_name, '.'.join(modparts), f) for f in files]
+        # ex: 'Quaking Aspen'
         titles = [f.replace('_', ' ').title() for f in files]
 
         quaking_aspen = modules[0]
@@ -38,13 +39,12 @@ def _get_tree_types():
             if title == 'Quaking Aspen':
                 quaking_aspen = module
 
-            options.append((module, title, title))
+            # Item format: (internal value, label, hover-text)
+            options.add((module, title, title))
 
         enums.append(bpy.props.EnumProperty(name="", items=tuple(options), default=quaking_aspen))
 
     return enums
-
-# ---
 
 
 class TreeGen(bpy.types.Operator):
@@ -55,12 +55,6 @@ class TreeGen(bpy.types.Operator):
     bl_label = "Generate Tree"
     bl_options = {'REGISTER', 'UNDO'}
 
-    # Empty names remove labels from input boxes
-    bpy.types.Scene.seed_input = bpy.props.IntProperty(name="", default=0, min=0, max=9999999)
-    bpy.types.Scene.simplify_geometry_input = bpy.props.BoolProperty(name="Simplify branch geometry", default=False)
-    bpy.types.Scene.render_input = bpy.props.BoolProperty(name="Render", default=False)
-    path = os.path.sep.join((os.path.expanduser('~'), 'treegen_render.png'))
-    bpy.types.Scene.out_path_input = bpy.props.StringProperty(name="", default=path)
 
     _gen_methods = (('parametric', 'Parametric', 'Parametric mode'),
                     ('lsystem', 'L-System', 'L-System mode'))
@@ -78,7 +72,8 @@ class TreeGen(bpy.types.Operator):
 
     # ---
     def _construct(self, context):
-        # The generator's main thread. Also handles conditional logic for generation method selection.
+        # The generator's main thread.
+        # Handles conditional logic for generation method selection.
 
         scene = context.scene
         mod_name = scene.para_tree_type_input if scene.tree_gen_method_input == 'parametric' else scene.lsys_tree_type_input
@@ -86,10 +81,10 @@ class TreeGen(bpy.types.Operator):
         if mod_name.startswith('ch_trees.parametric'):
             mod = __import__(mod_name, fromlist=[''])
             imp.reload(mod)
-            parametric.gen.construct(mod.params, scene.seed_input, scene.render_input, scene.out_path_input)
+            parametric.gen.construct(mod.params, scene.seed_input, scene.render_input, scene.render_output_path_input, scene.generate_leaves_input)
 
         else:
-            lsystems.gen.construct(mod_name)
+            lsystems.gen.construct(mod_name, scene.generate_leaves_input)
 
         if scene.simplify_geometry_input:
             from . import utilities
@@ -107,8 +102,6 @@ class TreeGen(bpy.types.Operator):
 
             sys.stdout.write('Geometry simplification complete\n\n')
             sys.stdout.flush()
-
-# ------
 
 
 class TreeGenPanel(bpy.types.Panel):
@@ -151,11 +144,15 @@ class TreeGenPanel(bpy.types.Panel):
         if mode == 'parametric':
             label_row('Seed:', 'seed_input')
 
-            label_row('', 'render_input', False, True)
-            if scene.render_input:
-                label_row('Render output path:', 'out_path_input')
+        label_row('', 'generate_leaves_input', False, True)
 
         label_row('', 'simplify_geometry_input', True, True)
+
+        if mode == 'parametric':
+            label_row('', 'render_input', False, True)
+            if scene.render_input:
+                label_row('Render output path:', 'render_output_path_input', False)
+            layout.separator()
 
         layout.separator()
         layout.row()
