@@ -29,6 +29,7 @@ def _get_tree_types():
 
         # ex: ['ch_trees.parametric.tree_params.quaking_aspen', ...]
         modules = ['{}.{}.{}'.format(addon_name, '.'.join(modparts), f) for f in files]
+
         # ex: 'Quaking Aspen'
         titles = [f.replace('_', ' ').title() for f in files]
 
@@ -55,11 +56,27 @@ class TreeGen(bpy.types.Operator):
     bl_label = "Generate Tree"
     bl_options = {'REGISTER', 'UNDO'}
 
+    # ---
+    # Note: an empty-string 'name' parameter removes the default label from inputs
 
+    # Item format: (internal value, label, hover-text)
     _gen_methods = (('parametric', 'Parametric', 'Parametric mode'),
                     ('lsystem', 'L-System', 'L-System mode'))
     bpy.types.Scene.tree_gen_method_input = bpy.props.EnumProperty(name="", items=_gen_methods, default='parametric')
+
+    # Drop-downs containing tree options for each generation method
+    # These are switched between by TreeGenPanel.draw() based on the state of tree_gen_method_input
     bpy.types.Scene.para_tree_type_input, bpy.types.Scene.lsys_tree_type_input = _get_tree_types()
+
+    # Nothing exciting here. Seed, leaf toggle, and simplify geometry toggle.
+    bpy.types.Scene.seed_input = bpy.props.IntProperty(name="", default=0, min=0, max=9999999)
+    bpy.types.Scene.generate_leaves_input = bpy.props.BoolProperty(name="Generate leaves", default=True)
+    bpy.types.Scene.simplify_geometry_input = bpy.props.BoolProperty(name="Simplify branch geometry", default=False)
+
+    # Render inputs; auto-fill path input with user's home directory
+    bpy.types.Scene.render_input = bpy.props.BoolProperty(name="Render", default=False)
+    render_output_path = os.path.sep.join((os.path.expanduser('~'), 'treegen_render.png'))
+    bpy.types.Scene.render_output_path_input = bpy.props.StringProperty(name="", default=render_output_path)
 
     # ---
     def execute(self, context):
