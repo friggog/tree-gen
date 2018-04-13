@@ -149,7 +149,7 @@ class LSystem(object):
         else:
             update_log('\nMade %i symbols in %f seconds\n' % (len(self.data), time() - start))
 
-    def parse(self):
+    def parse(self, generate_leaves=True):
         """parse l-system and generate model"""
 
         try:
@@ -212,9 +212,11 @@ class LSystem(object):
                 # move turtle and extend spline
                 turtle.move(dat.parameters["l"])
                 self.add_points_to_bez(active_branch, old, turtle.pos, turtle.width, active_branch == trunk)
-                if "leaves" in dat.parameters and abs(dat.parameters["leaves"]) > 1:
+
+                if generate_leaves and "leaves" in dat.parameters and abs(dat.parameters["leaves"]) > 1:
                     prev_leaf_ang = self.add_leaves_to_seg(dat.parameters, active_branch, leaf_array, turtle,
                                                            prev_leaf_ang)
+
             elif ltr == "A" or ltr == "%":
                 # at end of branch so taper width to 0
                 if len(active_branch.bezier_points) > 0:
@@ -239,7 +241,7 @@ class LSystem(object):
             elif ltr == "\\":
                 # roll left
                 turtle.roll_left(dat.parameters["a"])
-            elif ltr == "L":
+            elif ltr == "L" and generate_leaves:
                 # add a leaf
                 leaf_turtle = CHTurtle(turtle)
                 leaf_turtle.roll_left(dat.parameters["r_ang"])
@@ -289,7 +291,8 @@ class LSystem(object):
         # TODO do this better, could calc vertices by multiplying by bevel res and curve res?
         update_log('Curve points: %i\n' % curve_points)
 
-        self.create_leaf_mesh(leaf_array)
+        if generate_leaves:
+            self.create_leaf_mesh(leaf_array)
 
     def add_points_to_bez(self, line, point1, point2, width, trunk=False):
         """add point to specific bezier spline"""

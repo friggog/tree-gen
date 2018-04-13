@@ -147,11 +147,17 @@ class Tree(object):
     tree_obj = None
     trunk_length = 0
 
-    def __init__(self, param):
+    def __init__(self, param, generate_leaves=True):
         """initialize tree with specified parameters"""
+
         self.param = param
+        self.generate_leaves = generate_leaves
         self.leaves_array = []
         self.stem_index = 0
+
+        # Disable leaf generation
+        if not generate_leaves:
+            self.param.leaf_blos_num = 0
 
     def make(self):
         """make the tree"""
@@ -166,8 +172,10 @@ class Tree(object):
         # create branches
         self.create_branches()
 
-        # create leaf mesh if needed
-        self.create_leaf_mesh()
+        # Create leaf mesh if needed and enabled
+        if self.generate_leaves:
+            self.create_leaf_mesh()
+
         g_time = time() - start_time
 
         update_log('\nTree generated in %f seconds\n\n' % g_time)
@@ -408,7 +416,8 @@ class Tree(object):
         # calc base segment
         base_seg_ind = ceil(self.param.base_size[0] * int(self.param.curve_res[0]))
 
-        leaf_count = branch_count = 0
+        leaf_count = 0
+        branch_count = 0
         if depth == self.param.levels - 1 and depth > 0 and self.param.leaf_blos_num != 0:
             # calc base leaf count
             leaf_count = self.calc_leaf_count(stem)
@@ -1198,14 +1207,14 @@ def scale_bezier_handles_for_flare(stem, max_points_per_seg):
         point.handle_right = point.co + (point.handle_right - point.co) / max_points_per_seg
 
 
-def construct(params, seed=0, render=False, out_path=None):
+def construct(params, seed=0, render=False, out_path=None, generate_leaves=True):
     """Construct the tree"""
 
     if seed == 0:
         seed = int(random.random() * 9999999)
 
     random.seed(seed)
-    Tree(TreeParam(params)).make()
+    Tree(TreeParam(params), generate_leaves).make()
 
     if render:
         update_log('Rendering Scene\n')
