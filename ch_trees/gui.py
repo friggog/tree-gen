@@ -41,7 +41,7 @@ def _get_tree_types():
                 quaking_aspen = module
 
             # Item format: (internal value, label, hover-text)
-            options.add((module, title, title))
+            options.append((module, title, title))
 
         enums.append(bpy.props.EnumProperty(name="", items=tuple(options), default=quaking_aspen))
 
