@@ -142,12 +142,11 @@ class TreeGen(bpy.types.Operator):
         )
         bpy.types.Scene.tree_shape_input = bpy.props.EnumProperty(name="", items=tree_shape_options, default=0)
 
-        bpy.types.Scene.tree_prune_ratio_input = Float 0-1 (0)
-        bpy.types.Scene.tree_prune_width_input = Float > 0 (.5)
-        bpy.types.Scene.tree_prune_width_peak_input = Float >= 0 (.5)
-        bpy.types.Scene.tree_prune_power_low_input = Float (0.5) <1 convex, >1 concave
-        bpy.types.Scene.tree_prune_power_high_input = Float (0.5) <1 convex, >1 concave
-
+        bpy.types.Scene.tree_prune_ratio_input = bpy.props.FloatProperty(name="", default=0, min=0, max=1)
+        bpy.types.Scene.tree_prune_width_input = bpy.props.FloatProperty(name="", default=.5, min=.000001, max=200)
+        bpy.types.Scene.tree_prune_width_peak_input = bpy.props.FloatProperty(name="", default=.5, min=0, max=200)
+        bpy.types.Scene.tree_prune_power_low_input = bpy.props.FloatProperty(name="", default=.5, min=-200, max=200)  # <1 convex, >1 concave
+        bpy.types.Scene.tree_prune_power_high_input = bpy.props.FloatProperty(name="", default=.5, min=-200, max=200) # <1 convex, >1 concave
 
         # Overall tree scale and scale variation
         bpy.types.Scene.g_scale_input = bpy.props.FloatProperty(name="", default=13, min=.000001, max=150)
@@ -258,8 +257,6 @@ class TreeGenPanel(bpy.types.Panel):
                 label_row('Render output path:', 'render_output_path_input', False)
             layout.separator()
 
-        
-
         # Show customizer
         if mode == 'parametric' and scene.parametric_tree_type_input == 'custom':
             # Create a new drop-down here...
@@ -271,9 +268,7 @@ class TreeGenPanel(bpy.types.Panel):
             if scene.tree_shape_input == 8:
                 # ...
                 pass
-        
-        
-        
+
         layout.separator()
         layout.row()
         layout.operator(TreeGen.bl_idname)
