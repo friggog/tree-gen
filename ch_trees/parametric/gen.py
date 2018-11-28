@@ -9,6 +9,8 @@ from imp import reload  # required to fix Blender weirdness
 from math import ceil, sqrt, degrees, radians, tan, sin, cos, pow, pi
 from time import time
 
+#import multiprocessing
+
 # blender imports
 import bpy
 from enum import Enum
@@ -32,11 +34,13 @@ def update_log(msg):
 
 def rand_for_param_var():
     """Generate random number between -1 and 1"""
-    return random.choice([-1, 1]) * rand_in_range(0, 1)
+
+    return random.uniform(-1, 1)
 
 
 def rand_in_range(lower, upper):
     """Generate random number between lower and upper"""
+
     return (random.random() * (upper - lower)) + lower
 
 
@@ -195,7 +199,7 @@ class Tree(object):
             point_ok = False
             while not point_ok:
                 # distance from center proportional for number of splits, tree scale and stem radius
-                dis = sqrt(rand_in_range(0, 1) * self.param.floor_splits / 2.5 * self.param.g_scale * self.param.ratio)
+                dis = sqrt(random.random() * self.param.floor_splits / 2.5 * self.param.g_scale * self.param.ratio)
                 # angle random in circle
                 theta = rand_in_range(0, 2 * pi)
                 pos = Vector([dis * cos(theta), dis * sin(theta), 0])
@@ -278,6 +282,7 @@ class Tree(object):
         # go through global leaf array populated in branch making phase and add polygons to mesh
         base_leaf_shape = Leaf.get_shape(self.param.leaf_shape, self.tree_scale / self.param.g_scale,
                                          self.param.leaf_scale, self.param.leaf_scale_x)
+
         base_blossom_shape = Leaf.get_shape(-self.param.blossom_shape, self.tree_scale / self.param.g_scale,
                                             self.param.blossom_scale, 1)
         leaf_verts = []
@@ -294,7 +299,7 @@ class Tree(object):
 
             update_log('\r-> {} leaves made, {} blossoms made'.format(leaf_index, blossom_index))
 
-            if rand_in_range(0, 1) < self.param.blossom_rate:
+            if random.random() < self.param.blossom_rate:
                 self.make_leaf(leaf, base_blossom_shape, blossom_index, blossom_verts, blossom_faces)
                 blossom_index += 1
             else:
@@ -340,7 +345,9 @@ class Tree(object):
 
     def make_leaf(self, leaf, base_leaf_shape, index, verts_array, faces_array):
         """get vertices and faces for leaf and append to appropriate arrays"""
+
         verts, faces = leaf.get_mesh(self.param.leaf_bend, base_leaf_shape, index)
+
         verts_array.extend(verts)
         faces_array.extend(faces)
 
@@ -532,13 +539,13 @@ class Tree(object):
                         # if base_seg_ind and has base splits then override with base split number
                         # take random number of splits up to max of base_splits if negative
                         if self.param.base_splits < 0:
-                            num_of_splits = int(rand_in_range(0, 1) * (abs(self.param.base_splits) + 0.5))
+                            num_of_splits = int(random.random() * (abs(self.param.base_splits) + 0.5))
                         else:
                             num_of_splits = int(self.param.base_splits)
                     elif seg_splits > 0 and seg_ind < curve_res and (depth > 0 or seg_ind > base_seg_ind):
                         # otherwise get number of splits from seg_splits and use floyd-steinberg to
                         # fix non-integer values only clone with probability clone_prob
-                        if rand_in_range(0, 1) <= clone_prob:
+                        if random.random() <= clone_prob:
                             num_of_splits = int(seg_splits + self.split_num_error[depth])
                             self.split_num_error[depth] -= num_of_splits - seg_splits
                             # reduce clone/branch propensity
@@ -600,7 +607,7 @@ class Tree(object):
                                 depth] - declination
                             spl_angle = max(0, spl_angle)
                             split_corr_angle = spl_angle / remaining_segs
-                            spr_angle = - (20 + 0.75 * (30 + abs(declination - 90) * rand_in_range(0, 1) ** 2))
+                            spr_angle = - (20 + 0.75 * (30 + abs(declination - 90) * random.random() ** 2))
 
                         # make clone branches
                         r_state = random.getstate()
@@ -711,11 +718,11 @@ class Tree(object):
                     if self.param.base_splits > 0 and depth == 0 and seg_ind == base_seg_ind:
                         # if base_seg_ind and has base splits then override with base split number
                         # take random number of splits up to max of base_splits
-                        num_of_splits = int(rand_in_range(0, 1) * (self.param.base_splits + 0.5))
+                        num_of_splits = int(random.random() * (self.param.base_splits + 0.5))
                     elif seg_splits > 0 and seg_ind < curve_res and (depth > 0 or seg_ind > base_seg_ind):
                         # otherwise get number of splits from seg_splits and use Floyd-Steinberg to
                         # fix non-integer values only clone with probability clone_prob
-                        if rand_in_range(0, 1) <= clone_prob:
+                        if random.random() <= clone_prob:
                             num_of_splits = int(seg_splits + self.split_num_error[depth])
                             self.split_num_error[depth] -= num_of_splits - seg_splits
                             # reduce clone/branch propensity
@@ -737,7 +744,7 @@ class Tree(object):
                                 depth] - declination
                             spl_angle = max(0, spl_angle)
                             split_corr_angle = spl_angle / remaining_segs
-                            spr_angle = - (20 + 0.75 * (30 + abs(declination - 90) * rand_in_range(0, 1) ** 2))
+                            spr_angle = - (20 + 0.75 * (30 + abs(declination - 90) * random.random() ** 2))
 
                         # apply split to base stem
                         turtle.pitch_down(spl_angle / 2)

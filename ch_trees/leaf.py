@@ -30,6 +30,7 @@ class Leaf(object):
             if leaf_type < -3:  # out of range
                 leaf_type = -1
             shape = leaf_geom.blossom(abs(leaf_type + 1))
+
         else:  # leaf
             if leaf_type < 1 or leaf_type > 10:  # is out of range or explicitly default
                 leaf_type = 8
@@ -43,10 +44,12 @@ class Leaf(object):
         for vert in verts:
             vert *= scale * g_scale
             vert.x *= scale_x
+
         return verts, faces, u_v
 
     def get_mesh(self, bend, base_shape, index):
         """produce leaf mesh at position of this leaf given base mesh as input"""
+
         # calculate angles to transform mesh to align with desired direction
         trf = self.direction.to_track_quat('Z', 'Y')
         right_t = self.right.rotated(trf.inverted())
@@ -64,20 +67,25 @@ class Leaf(object):
             vertex = vertex.copy()
             vertex.rotate(Quaternion(Vector([0, 0, 1]), spin_ang))
             vertex.rotate(trf)
+
             # apply bend if needed
             if bend > 0:
                 vertex.rotate(bend_trf_1)
                 vertex.rotate(bend_trf_2)
+
             # move to right position
             vertex += self.position
             # add to vertex array
             vertices.append(vertex)
+
         # set face to refer to vertices at correct offset in big vertex list
         index *= len(vertices)
         faces = deepcopy(base_shape[1])
+
         for face in faces:
             for ind, elem in enumerate(face):
                 face[ind] = elem + index
+
         return vertices, faces
 
     def calc_bend_trf(self, bend):

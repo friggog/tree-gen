@@ -6,6 +6,8 @@ import imp
 import sys
 import os
 
+import cProfile
+
 from ch_trees import parametric
 from ch_trees import lsystems
 
@@ -92,6 +94,9 @@ class TreeGen(bpy.types.Operator):
         # The generator's main thread.
         # Handles conditional logic for generation method selection.
 
+        profiler = cProfile.Profile()
+        profiler.enable()
+
         scene = context.scene
         mod_name = scene.para_tree_type_input if scene.tree_gen_method_input == 'parametric' else scene.lsys_tree_type_input
 
@@ -119,6 +124,10 @@ class TreeGen(bpy.types.Operator):
 
             sys.stdout.write('Geometry simplification complete\n\n')
             sys.stdout.flush()
+
+        profiler.disable()
+
+        profiler.dump_stats(r'C:\Users\Luke\Desktop\profiler_results')
 
 
 class TreeGenPanel(bpy.types.Panel):
