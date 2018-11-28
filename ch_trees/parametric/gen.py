@@ -32,12 +32,6 @@ def update_log(msg):
         sys.stdout.flush()
 
 
-def rand_for_param_var():
-    """Generate random number between -1 and 1"""
-
-    return random.uniform(-1, 1)
-
-
 def rand_in_range(lower, upper):
     """Generate random number between lower and upper"""
 
@@ -235,7 +229,7 @@ class Tree(object):
         points = self.points_for_floor_split()
 
         for ind in range(self.param.floor_splits + 1):
-            self.tree_scale = self.param.g_scale + rand_for_param_var() * self.param.g_scale_v
+            self.tree_scale = self.param.g_scale + random.uniform(-1, 1) * self.param.g_scale_v
             turtle = CHTurtle()
             turtle.pos = Vector([0, 0, 0])
             turtle.dir = Vector([0, 0, 1])
@@ -370,7 +364,7 @@ class Tree(object):
 
         # calc length and radius for this stem (only applies for non clones)
         if start == 0:
-            stem.length_child_max = self.param.length[d_plus_1] + rand_for_param_var() * self.param.length_v[d_plus_1]
+            stem.length_child_max = self.param.length[d_plus_1] + random.uniform(-1, 1) * self.param.length_v[d_plus_1]
             stem.length = self.calc_stem_length(stem)
             stem.radius = self.calc_stem_radius(stem)
             if depth == 0:
@@ -597,13 +591,13 @@ class Tree(object):
                         is_base_split = (self.param.base_splits > 0 and depth == 0 and seg_ind == base_seg_ind)
                         using_direct_split = self.param.split_angle[depth] < 0
                         if using_direct_split:
-                            spr_angle = abs(self.param.split_angle[depth]) + rand_for_param_var() * \
+                            spr_angle = abs(self.param.split_angle[depth]) + random.uniform(-1, 1) * \
                                 self.param.split_angle_v[depth]
                             spl_angle = 0
                             split_corr_angle = 0
                         else:
                             declination = turtle.dir.declination()
-                            spl_angle = self.param.split_angle[depth] + rand_for_param_var() * self.param.split_angle_v[
+                            spl_angle = self.param.split_angle[depth] + random.uniform(-1, 1) * self.param.split_angle_v[
                                 depth] - declination
                             spl_angle = max(0, spl_angle)
                             split_corr_angle = spl_angle / remaining_segs
@@ -628,7 +622,7 @@ class Tree(object):
                                 turtle.right.normalize()
                     else:
                         # just apply curve and split correction
-                        turtle.turn_left(rand_for_param_var() * self.param.bend_v[depth] / curve_res)
+                        turtle.turn_left(random.uniform(-1, 1) * self.param.bend_v[depth] / curve_res)
                         curve_angle = self.calc_curve_angle(depth, seg_ind)
                         turtle.pitch_down(curve_angle - split_corr_angle)
 
@@ -734,13 +728,13 @@ class Tree(object):
                         is_base_split = (self.param.base_splits > 0 and depth == 0 and seg_ind == base_seg_ind)
                         using_direct_split = self.param.split_angle[depth] < 0
                         if using_direct_split:
-                            spr_angle = abs(self.param.split_angle[depth]) + rand_for_param_var() * \
+                            spr_angle = abs(self.param.split_angle[depth]) + random.uniform(-1, 1) * \
                                 self.param.split_angle_v[depth]
                             spl_angle = 0
                             split_corr_angle = 0
                         else:
                             declination = turtle.dir.declination()
-                            spl_angle = self.param.split_angle[depth] + rand_for_param_var() * self.param.split_angle_v[
+                            spl_angle = self.param.split_angle[depth] + random.uniform(-1, 1) * self.param.split_angle_v[
                                 depth] - declination
                             spl_angle = max(0, spl_angle)
                             split_corr_angle = spl_angle / remaining_segs
@@ -759,7 +753,7 @@ class Tree(object):
                                 turtle.right.normalize()
                     else:
                         # just apply curve and split correction
-                        turtle.turn_left(rand_for_param_var() * self.param.bend_v[depth] / curve_res)
+                        turtle.turn_left(random.uniform(-1, 1) * self.param.bend_v[depth] / curve_res)
                         curve_angle = self.calc_curve_angle(depth, seg_ind)
                         turtle.pitch_down(curve_angle - split_corr_angle)
 
@@ -782,7 +776,7 @@ class Tree(object):
             n_turtle.pitch_down(spl_angle / 2)
             # spread out clones
             if is_base_split and not using_direct_split:
-                eff_spr_angle = (j + 1) * (360 / (num_of_splits + 1)) + rand_for_param_var() * self.param.split_angle_v[
+                eff_spr_angle = (j + 1) * (360 / (num_of_splits + 1)) + random.uniform(-1, 1) * self.param.split_angle_v[
                     stem.depth]
             else:
                 if not is_base_split and num_of_splits > 2:
@@ -923,13 +917,13 @@ class Tree(object):
                 t_angle = 0
             else:
                 t_angle = (self.param.rotate[d_plus_1] * (
-                    (branch_ind / (branches_in_group - 1)) - 1 / 2)) + rand_for_param_var() * self.param.rotate_v[
+                    (branch_ind / (branches_in_group - 1)) - 1 / 2)) + random.uniform(-1, 1) * self.param.rotate_v[
                     d_plus_1]
             branch_dir_turtle.turn_right(t_angle)
             radius_limit = 0
         else:
             if branch_mode is BranchMode.whorled:
-                r_angle = prev_rot_ang[0] + (360 * branch_ind / branches_in_group) + rand_for_param_var() * \
+                r_angle = prev_rot_ang[0] + (360 * branch_ind / branches_in_group) + random.uniform(-1, 1) * \
                     self.param.rotate_v[d_plus_1]
             else:
                 r_angle = self.calc_rotate_angle(d_plus_1, prev_rot_ang[0])
@@ -989,7 +983,7 @@ class Tree(object):
                 curve_angle = curve / (curve_res / 2.0)
             else:
                 curve_angle = curve_back / (curve_res / 2.0)
-        curve_angle += rand_for_param_var() * (curve_v / curve_res)
+        curve_angle += random.uniform(-1, 1) * (curve_v / curve_res)
         return curve_angle
 
     def calc_down_angle(self, stem, stem_offset):
@@ -1003,7 +997,7 @@ class Tree(object):
                 1 - 2 * self.shape_ratio(0, (stem.length - stem_offset) / (stem.length * (
                     1 - self.param.base_size[stem.depth])))))
             # introduce some variance to improve visual result
-            d_angle += rand_for_param_var() * abs(d_angle * 0.1)
+            d_angle += random.uniform(-1, 1) * abs(d_angle * 0.1)
         return d_angle
 
     def calc_rotate_angle(self, depth, prev_angle):
