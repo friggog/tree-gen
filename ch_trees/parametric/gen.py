@@ -948,8 +948,7 @@ class Tree(object):
     def calc_stem_length(self, stem):
         """Calculate length of this stem as defined in paper"""
         if stem.depth == 0:  # trunk
-            result = self.tree_scale * (self.param.length[0] + rand_for_param_var(
-            ) * self.param.length_v[0])
+            result = self.tree_scale * (self.param.length[0] + random.uniform(-1, 1) * self.param.length_v[0])
             self.trunk_length = result
         elif stem.depth == 1:  # first level
             result = stem.parent.length * stem.parent.length_child_max * self.shape_ratio(
