@@ -8,6 +8,7 @@ from mathutils import Quaternion
 
 import ch_trees.leaf_shapes as leaf_geom
 
+
 class Leaf(object):
     """Class to store data for each leaf in the system"""
     position = None
@@ -25,12 +26,12 @@ class Leaf(object):
         """returns the base leaf shape mesh"""
         u_v = []
 
-        if leaf_type < 0: # blossom
-            if leaf_type < -3: # out of range
+        if leaf_type < 0:  # blossom
+            if leaf_type < -3:  # out of range
                 leaf_type = -1
             shape = leaf_geom.blossom(abs(leaf_type + 1))
-        else: # leaf
-            if leaf_type < 1 or leaf_type > 10: # is out of range or explicitly default
+        else:  # leaf
+            if leaf_type < 1 or leaf_type > 10:  # is out of range or explicitly default
                 leaf_type = 8
             shape = leaf_geom.leaves(leaf_type - 1)
 

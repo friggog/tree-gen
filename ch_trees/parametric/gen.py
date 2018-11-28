@@ -23,6 +23,7 @@ windman = bpy.context.window_manager
 
 # ----- GENERAL FUNCTIONS ----- #
 
+
 def update_log(msg):
     if __console_logging__:
         sys.stdout.write(msg)
@@ -145,42 +146,50 @@ class Tree(object):
     split_num_error = [0, 0, 0, 0, 0, 0, 0]
     tree_obj = None
     trunk_length = 0
-    
-    def __init__(self, param):
+
+    def __init__(self, param, generate_leaves=True):
         """initialize tree with specified parameters"""
+
         self.param = param
+        self.generate_leaves = generate_leaves
         self.leaves_array = []
         self.stem_index = 0
+
+        # Disable leaf generation
+        if not generate_leaves:
+            self.param.leaf_blos_num = 0
 
     def make(self):
         """make the tree"""
         start_time = time()
         update_log('\n** Generating Tree **\n')
-        
+
         # create parent object
         self.tree_obj = bpy.data.objects.new('Tree', None)
         bpy.context.scene.objects.link(self.tree_obj)
         bpy.context.scene.objects.active = self.tree_obj
-        
+
         # create branches
         self.create_branches()
-        
-        # create leaf mesh if needed
-        self.create_leaf_mesh()
+
+        # Create leaf mesh if needed and enabled
+        if self.generate_leaves:
+            self.create_leaf_mesh()
+
         g_time = time() - start_time
-        
+
         update_log('\nTree generated in %f seconds\n\n' % g_time)
 
     def points_for_floor_split(self):
         """Calculate Poissonly distributed points for stem start points"""
         array = []
-        
+
         # calculate approx spacing radius for dummy stem
         self.tree_scale = self.param.g_scale + self.param.g_scale_v
         stem = Stem(0, None)
         stem.length = self.calc_stem_length(stem)
         rad = 2.5 * self.calc_stem_radius(stem)
-        
+
         # generate points
         for _ in range(self.param.floor_splits + 1):
             point_ok = False
@@ -203,9 +212,9 @@ class Tree(object):
 
     def create_branches(self):
         """Create branches for tree"""
-        
+
         update_log('\nMaking Stems\n')
-    
+
         start_time = time()
         self.branches_curve = bpy.data.curves.new('branches', type='CURVE')
         self.branches_curve.dimensions = '3D'
@@ -217,17 +226,17 @@ class Tree(object):
         branches_obj = bpy.data.objects.new('Branches', self.branches_curve)
         bpy.context.scene.objects.link(branches_obj)
         branches_obj.parent = self.tree_obj
-        
+
         # actually make the branches
         points = self.points_for_floor_split()
-        
+
         for ind in range(self.param.floor_splits + 1):
             self.tree_scale = self.param.g_scale + rand_for_param_var() * self.param.g_scale_v
             turtle = CHTurtle()
             turtle.pos = Vector([0, 0, 0])
             turtle.dir = Vector([0, 0, 1])
             turtle.right = Vector([1, 0, 0])
-            
+
             if self.param.floor_splits > 0:
                 # position randomly at base and rotate to face out
                 point = points[ind]
@@ -236,7 +245,7 @@ class Tree(object):
             else:
                 # start at random rotation
                 turtle.roll_right(rand_in_range(0, 360))
-                
+
             trunk = self.branches_curve.splines.new('BEZIER')
             trunk.radius_interpolation = 'CARDINAL'
             trunk.resolution_u = 2
@@ -248,24 +257,24 @@ class Tree(object):
         curve_points = 0
         for spline in self.branches_curve.splines:
             curve_points += len(spline.bezier_points)
-            
+
         # TODO do this better, could calc vertices by multiplying by bevel res and curve res?
         update_log('Curve points: %i\n' % curve_points)
-        
+
         return b_time
 
     def create_leaf_mesh(self):
         """Create leaf mesh for tree"""
-        
+
         if len(self.leaves_array) <= 0:
             return
-            
+
         update_log('\nMaking Leaves\n')
         start_time = time()
-        
+
         # Start loading spinner
         windman.progress_begin(0, len(self.leaves_array))
-        
+
         # go through global leaf array populated in branch making phase and add polygons to mesh
         base_leaf_shape = Leaf.get_shape(self.param.leaf_shape, self.tree_scale / self.param.g_scale,
                                          self.param.leaf_scale, self.param.leaf_scale_x)
@@ -277,14 +286,14 @@ class Tree(object):
         blossom_verts = []
         blossom_faces = []
         blossom_index = 0
-        
+
         for ind, leaf in enumerate(self.leaves_array):
             # Update loading spinner periodically
             if ind % 500 == 0:
                 windman.progress_update(ind / 100)
-                
+
             update_log('\r-> {} leaves made, {} blossoms made'.format(leaf_index, blossom_index))
-            
+
             if rand_in_range(0, 1) < self.param.blossom_rate:
                 self.make_leaf(leaf, base_blossom_shape, blossom_index, blossom_verts, blossom_faces)
                 blossom_index += 1
@@ -301,11 +310,11 @@ class Tree(object):
             leaves.from_pydata(leaf_verts, (), leaf_faces)
             # set up UVs for leaf polygons
             leaf_uv = base_leaf_shape[2]
-            
+
             if leaf_uv:
                 leaves.uv_textures.new("leavesUV")
                 uv_layer = leaves.uv_layers.active.data
-                
+
                 for seg_ind in range(int(len(leaf_faces) / len(base_leaf_shape[1]))):
                     for vert_ind, vert in enumerate(leaf_uv):
                         uv_layer[seg_ind * len(leaf_uv) + vert_ind].uv = vert
@@ -321,9 +330,9 @@ class Tree(object):
 
         l_time = time() - start_time
         update_log('\nMade %i leaves and %i blossoms in %f seconds\n' % (leaf_index, blossom_index, l_time))
-        
+
         windman.progress_end()
-        
+
         # TODO model complexity stuff? is just linear in no of leaves anyway
         # vertex count = len(leaf_verts) * leaf_index same for blos
         # face count = len(leaf_faces) * leaf_index
@@ -343,9 +352,9 @@ class Tree(object):
         # if the stem is so thin as to be invisible then don't bother to make it
         if 0 <= stem.radius_limit < 0.0001:
             return
-        
+
         update_log('\r-> {} stems made'.format(self.stem_index))
-        
+
         # use level 3 parameters for any depth greater than this
         depth = stem.depth
         d_plus_1 = depth + 1
@@ -385,11 +394,11 @@ class Tree(object):
                         break
                     else:
                         return
-                        
+
                 random.setstate(r_state)
                 self.split_num_error = split_err_state
                 in_pruning_envelope = self.test_stem(CHTurtle(turtle), stem, start, split_corr_angle, clone_prob)
-            
+
             fitting_length = stem.length
             # apply reduction scaled by prune ratio
             stem.length = start_length * (1 - self.param.prune_ratio) + fitting_length * self.param.prune_ratio
@@ -407,7 +416,8 @@ class Tree(object):
         # calc base segment
         base_seg_ind = ceil(self.param.base_size[0] * int(self.param.curve_res[0]))
 
-        leaf_count = branch_count = 0
+        leaf_count = 0
+        branch_count = 0
         if depth == self.param.levels - 1 and depth > 0 and self.param.leaf_blos_num != 0:
             # calc base leaf count
             leaf_count = self.calc_leaf_count(stem)
@@ -415,7 +425,7 @@ class Tree(object):
             leaf_count *= 1 - start / curve_res
             # divide by curve_res to get no per seg
             f_leaves_on_seg = leaf_count / curve_res
-            
+
         else:
             # calc base branch count
             branch_count = self.calc_branch_count(stem)
@@ -581,7 +591,7 @@ class Tree(object):
                         using_direct_split = self.param.split_angle[depth] < 0
                         if using_direct_split:
                             spr_angle = abs(self.param.split_angle[depth]) + rand_for_param_var() * \
-                                                                             self.param.split_angle_v[depth]
+                                self.param.split_angle_v[depth]
                             spl_angle = 0
                             split_corr_angle = 0
                         else:
@@ -628,9 +638,8 @@ class Tree(object):
         # scale down bezier point handles for flared base of trunk
         if points_per_seg > 2:
             scale_bezier_handles_for_flare(stem, max_points_per_seg)
-            
-        self.stem_index += 1
 
+        self.stem_index += 1
 
     def test_stem(self, turtle, stem, start=0, split_corr_angle=0, clone_prob=1):
         """Test if stem is inside pruning envelope"""
@@ -719,7 +728,7 @@ class Tree(object):
                         using_direct_split = self.param.split_angle[depth] < 0
                         if using_direct_split:
                             spr_angle = abs(self.param.split_angle[depth]) + rand_for_param_var() * \
-                                                                             self.param.split_angle_v[depth]
+                                self.param.split_angle_v[depth]
                             spl_angle = 0
                             split_corr_angle = 0
                         else:
@@ -914,7 +923,7 @@ class Tree(object):
         else:
             if branch_mode is BranchMode.whorled:
                 r_angle = prev_rot_ang[0] + (360 * branch_ind / branches_in_group) + rand_for_param_var() * \
-                                                                                     self.param.rotate_v[d_plus_1]
+                    self.param.rotate_v[d_plus_1]
             else:
                 r_angle = self.calc_rotate_angle(d_plus_1, prev_rot_ang[0])
                 if self.param.rotate[d_plus_1] >= 0:
@@ -1198,15 +1207,15 @@ def scale_bezier_handles_for_flare(stem, max_points_per_seg):
         point.handle_right = point.co + (point.handle_right - point.co) / max_points_per_seg
 
 
-def construct(params, seed=0, render=False, out_path=None):
+def construct(params, seed=0, render=False, out_path=None, generate_leaves=True):
     """Construct the tree"""
-    
+
     if seed == 0:
         seed = int(random.random() * 9999999)
 
     random.seed(seed)
-    Tree(TreeParam(params)).make()
-    
+    Tree(TreeParam(params), generate_leaves).make()
+
     if render:
         update_log('Rendering Scene\n')
         bpy.data.scenes['Scene'].render.filepath = out_path
