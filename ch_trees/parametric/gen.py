@@ -989,8 +989,7 @@ class Tree(object):
         """calc down angle as defined in paper"""
         d_plus_1 = min(stem.depth + 1, 3)
         if self.param.down_angle_v[d_plus_1] >= 0:
-            d_angle = self.param.down_angle[d_plus_1] + rand_for_param_var(
-            ) * self.param.down_angle_v[d_plus_1]
+            d_angle = self.param.down_angle[d_plus_1] + random.uniform(-1, 1) * self.param.down_angle_v[d_plus_1]
         else:
             d_angle = self.param.down_angle[d_plus_1] + (self.param.down_angle_v[d_plus_1] * (
                 1 - 2 * self.shape_ratio(0, (stem.length - stem_offset) / (stem.length * (
@@ -1002,11 +1001,9 @@ class Tree(object):
     def calc_rotate_angle(self, depth, prev_angle):
         """calc rotate angle as defined in paper, limit to 0-360"""
         if self.param.rotate[depth] >= 0:
-            r_angle = (prev_angle + self.param.rotate[depth] + rand_for_param_var(
-            ) * self.param.rotate_v[depth]) % 360
+            r_angle = (prev_angle + self.param.rotate[depth] + random.uniform(-1, 1) * self.param.rotate_v[depth]) % 360
         else:
-            r_angle = prev_angle * (180 + self.param.rotate[depth] + rand_for_param_var(
-            ) * self.param.rotate_v[depth])
+            r_angle = prev_angle * (180 + self.param.rotate[depth] + random.uniform(-1, 1) * self.param.rotate_v[depth])
         return r_angle
 
     def calc_leaf_count(self, stem):
