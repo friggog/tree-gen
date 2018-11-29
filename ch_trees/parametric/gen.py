@@ -362,7 +362,7 @@ class Tree(object):
         if 0 <= stem.radius_limit < 0.0001:
             return
 
-        if self.stem_index % 500:
+        if self.stem_index % 250:
             update_log('\r-> {} stems made'.format(self.stem_index))
 
         # use level 3 parameters for any depth greater than this
