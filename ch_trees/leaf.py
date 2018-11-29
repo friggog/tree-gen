@@ -80,11 +80,10 @@ class Leaf(object):
 
         # set face to refer to vertices at correct offset in big vertex list
         index *= len(vertices)
-        faces = deepcopy(base_shape[1])
 
-        for face in faces:
-            for ind, elem in enumerate(face):
-                face[ind] = elem + index
+        faces = []
+        for face in base_shape[1]:
+            faces.append([elem + index for elem in face])
 
         return vertices, faces
 

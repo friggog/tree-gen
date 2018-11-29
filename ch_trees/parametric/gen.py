@@ -290,14 +290,22 @@ class Tree(object):
             # Update loading spinner periodically
             if ind % 500 == 0:
                 windman.progress_update(ind / 100)
-
-            update_log('\r-> {} leaves made, {} blossoms made'.format(leaf_index, blossom_index))
+                update_log('\r-> {} leaves made, {} blossoms made'.format(leaf_index, blossom_index))
 
             if random.random() < self.param.blossom_rate:
-                self.make_leaf(leaf, base_blossom_shape, blossom_index, blossom_verts, blossom_faces)
+                verts, faces = leaf.get_mesh(self.param.leaf_bend, base_blossom_shape, blossom_index)
+
+                blossom_verts.extend(verts)
+                blossom_faces.extend(faces)
+
                 blossom_index += 1
+
             else:
-                self.make_leaf(leaf, base_leaf_shape, leaf_index, leaf_verts, leaf_faces)
+                verts, faces = leaf.get_mesh(self.param.leaf_bend, base_leaf_shape, leaf_index)
+
+                leaf_verts.extend(verts)
+                leaf_faces.extend(faces)
+
                 leaf_index += 1
 
         # set up mesh object
@@ -354,7 +362,8 @@ class Tree(object):
         if 0 <= stem.radius_limit < 0.0001:
             return
 
-        update_log('\r-> {} stems made'.format(self.stem_index))
+        if self.stem_index % 500:
+            update_log('\r-> {} stems made'.format(self.stem_index))
 
         # use level 3 parameters for any depth greater than this
         depth = stem.depth
