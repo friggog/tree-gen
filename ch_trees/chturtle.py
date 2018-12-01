@@ -50,11 +50,15 @@ class CHTurtle(object):
     def turn_right(self, angle):
         """Turn the turtle right about the axis perpendicular to the direction
         it is facing"""
+
         axis = (self.dir.cross(self.right))
         axis.normalize()
-        self.dir.rotate(Quaternion(axis, math.radians(angle)))
+
+        rot_quat = Quaternion(axis, math.radians(angle))
+
+        self.dir.rotate(rot_quat)
         self.dir.normalize()
-        self.right.rotate(Quaternion(axis, math.radians(angle)))
+        self.right.rotate(rot_quat)
         self.right.normalize()
 
     def turn_left(self, angle):
