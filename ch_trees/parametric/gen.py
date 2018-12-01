@@ -91,10 +91,10 @@ def calc_helix_points(turtle, rad, pitch):
     # align helix points to turtle direction and randomize rotation around axis
     trf = turtle.dir.to_track_quat('Z', 'Y')
     spin_ang = rand_in_range(0, 2 * pi)
-    rot_quat = Quaternion(Vector([0, 0, 1]))
+    rot_quat = Quaternion(Vector([0, 0, 1]), spin_ang)
 
     for p in points:
-        p.rotate(rot_quat, spin_ang)
+        p.rotate(rot_quat)
         p.rotate(trf)
 
     return points[1] - points[0], points[2] - points[0], points[3] - points[0], turtle.dir.copy()
@@ -821,7 +821,6 @@ class Tree(object):
         """make clones of branch used if seg_splits or base_splits > 0"""
 
         using_direct_split = self.param.split_angle[stem.depth] < 0
-        clone_next_turtle = self.param.split_angle_v[stem.depth] >= 0
         stem_depth = self.param.split_angle_v[stem.depth]
 
         if not is_base_split and num_of_splits > 2 and using_direct_split:
@@ -861,7 +860,7 @@ class Tree(object):
             new_stem = stem.copy()
             new_stem.curve = split_stem
 
-            if clone_next_turtle:
+            if self.param.split_angle_v[stem.depth] >= 0:
                 cloned = turtle
             else:
                 cloned = None
