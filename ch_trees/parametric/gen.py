@@ -14,10 +14,6 @@ from random import getstate as random_getstate
 from random import setstate as random_setstate
 from random import uniform as random_uniform
 
-import cProfile
-
-#import multiprocessing
-
 # blender imports
 import bpy
 from enum import Enum
@@ -34,8 +30,6 @@ windman = bpy.context.window_manager
 # ----- GENERAL FUNCTIONS ----- #
 
 update_log = utilities.get_logger(__console_logging__)
-
-profiler = cProfile.Profile()
 
 
 def rand_in_range(lower, upper):
@@ -187,11 +181,7 @@ class Tree(object):
         bpy.context.scene.objects.active = self.tree_obj
 
         # create branches
-        profiler.enable()
         self.create_branches()
-        profiler.disable()
-
-        profiler.dump_stats(r'C:\Users\Luke\Desktop\profiler_results.pickle')
 
         # Create leaf mesh if needed and enabled
         if self.generate_leaves:
