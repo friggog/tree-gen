@@ -36,6 +36,8 @@ windman = bpy.context.window_manager
 
 update_log = utilities.get_logger(__console_logging__)
 
+profiler = cProfile.Profile()
+
 
 def rand_in_range(lower, upper):
     """Generate random number between lower and upper"""
@@ -54,7 +56,7 @@ def calc_point_on_bezier(offset, start_point, end_point):
         one_minus_offset * offset ** 2 * end_point.handle_left + offset ** 3 * end_point.co
 
     # initialize new vector to add subclassed methods
-    return Vector([res.x, res.y, res.z])
+    return Vector(res)
 
 
 def calc_tangent_to_bezier(offset, start_point, end_point):
@@ -64,11 +66,14 @@ def calc_tangent_to_bezier(offset, start_point, end_point):
 
     one_minus_offset = 1 - offset
 
-    res = 3 * one_minus_offset ** 2 * (start_point.handle_right - start_point.co) + 6 * one_minus_offset * offset *\
-        (end_point.handle_left - start_point.handle_right) + 3 * offset ** 2 * (end_point.co - end_point.handle_left)
+    start_handle_right = start_point.handle_right
+    end_handle_left = end_point.handle_left
+
+    res = 3 * one_minus_offset ** 2 * (start_handle_right - start_point.co) + 6 * one_minus_offset * offset *\
+        (end_handle_left - start_handle_right) + 3 * offset ** 2 * (end_point.co - end_handle_left)
 
     # initialize new vector to add subclassed methods
-    return Vector([res.x, res.y, res.z])
+    return Vector(res)
 
 
 def calc_helix_points(turtle, rad, pitch):
@@ -183,14 +188,11 @@ class Tree(object):
         bpy.context.scene.objects.active = self.tree_obj
 
         # create branches
-        profiler = cProfile.Profile()
         profiler.enable()
-
         self.create_branches()
-
         profiler.disable()
-        profiler.dump_stats(r'C:\Users\Luke\Desktop\profiler_results.pickle')
 
+        profiler.dump_stats(r'C:\Users\Luke\Desktop\profiler_results.pickle')
 
         # Create leaf mesh if needed and enabled
         if self.generate_leaves:
@@ -269,6 +271,7 @@ class Tree(object):
             trunk = self.branches_curve.splines.new('BEZIER')
             trunk.radius_interpolation = 'CARDINAL'
             trunk.resolution_u = 2
+
             self.make_stem(turtle, Stem(0, trunk))
 
         b_time = time() - start_time
@@ -387,7 +390,7 @@ class Tree(object):
         if 0 <= stem.radius_limit < 0.0001:
             return
 
-        if self.stem_index % 300:
+        if self.stem_index % 100 == 0:
             update_log('\r-> {} stems made'.format(self.stem_index))
 
         # use level 3 parameters for any depth greater than this
@@ -809,40 +812,53 @@ class Tree(object):
     def make_clones(self, turtle, seg_ind, split_corr_angle, num_branches_factor, clone_prob,
                     stem, num_of_splits, spl_angle, spr_angle, is_base_split):
         """make clones of branch used if seg_splits or base_splits > 0"""
+
         using_direct_split = self.param.split_angle[stem.depth] < 0
-        for j in range(num_of_splits):
+        clone_next_turtle = self.param.split_angle_v[stem.depth] >= 0
+        stem_depth = self.param.split_angle_v[stem.depth]
+
+        if not is_base_split and num_of_splits > 2 and using_direct_split:
+            raise Exception('Only splitting up to 3 branches is supported')
+
+        for split_index in range(num_of_splits):
             # copy turtle for new branch
             n_turtle = CHTurtle(turtle)
             # tip branch down away from axis of stem
             n_turtle.pitch_down(spl_angle / 2)
+
             # spread out clones
             if is_base_split and not using_direct_split:
-                eff_spr_angle = (j + 1) * (360 / (num_of_splits + 1)) + random_uniform(-1, 1) * self.param.split_angle_v[
-                    stem.depth]
+                eff_spr_angle = (split_index + 1) * (360 / (num_of_splits + 1)) + random_uniform(-1, 1) * stem_depth
+
             else:
-                if not is_base_split and num_of_splits > 2:
-                    raise Exception('Only splitting up to 3 branches is supported')
-                if j == 0:
+                if split_index == 0:
                     eff_spr_angle = spr_angle / 2
                 else:
                     eff_spr_angle = -spr_angle / 2
+
             if using_direct_split:
                 n_turtle.turn_left(eff_spr_angle)
+
             else:
-                n_turtle.dir.rotate(Quaternion(Vector([0, 0, 1]), radians(eff_spr_angle)))
+                quat = Quaternion(Vector([0, 0, 1]), radians(eff_spr_angle))
+
+                n_turtle.dir.rotate(quat)
                 turtle.dir.normalize()
-                n_turtle.right.rotate(Quaternion(Vector([0, 0, 1]), radians(eff_spr_angle)))
+                n_turtle.right.rotate(quat)
                 turtle.right.normalize()
+
             # create new clone branch and set up then recurse
             split_stem = self.branches_curve.splines.new('BEZIER')
             split_stem.resolution_u = stem.curve.resolution_u
             split_stem.radius_interpolation = 'CARDINAL'
             new_stem = stem.copy()
             new_stem.curve = split_stem
-            if self.param.split_angle_v[stem.depth] >= 0:
+
+            if clone_next_turtle:
                 cloned = turtle
             else:
                 cloned = None
+
             self.make_stem(n_turtle, new_stem, seg_ind, split_corr_angle, num_branches_factor, clone_prob,
                            cloned_turtle=cloned)
 
@@ -991,10 +1007,13 @@ class Tree(object):
         # make branch position turtle in appropriate position on circumference
         branch_pos_turtle = make_branch_pos_turtle(branch_dir_turtle, offset, start_point,
                                                    end_point, radius_limit)
+
         # calc down angle
         d_angle = self.calc_down_angle(stem, stem_offset)
+
         # orient direction turtle to correct declination
         branch_dir_turtle.pitch_down(d_angle)
+
         # add branch to list to be made
         branches_array.append((branch_pos_turtle, branch_dir_turtle, radius_limit, stem_offset))
 
@@ -1225,7 +1244,8 @@ def make_branch_dir_turtle(turtle, helix, offset, start_point, end_point):
 
     branch_dir_turtle = CHTurtle()
     tangent = calc_tangent_to_bezier(offset, start_point, end_point)
-    branch_dir_turtle.dir = tangent.normalized()
+    tangent.normalize()
+    branch_dir_turtle.dir = tangent
 
     if helix:
         # approximation to actual normal to preserve for helix

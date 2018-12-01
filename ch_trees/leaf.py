@@ -1,6 +1,5 @@
 """Leaf module shared by L-System and Parametric tree generators"""
 
-from copy import deepcopy
 from math import atan2, pi
 
 from ch_trees.chturtle import Vector
@@ -54,6 +53,7 @@ class Leaf(object):
         trf = self.direction.to_track_quat('Z', 'Y')
         right_t = self.right.rotated(trf.inverted())
         spin_ang = pi - right_t.angle(Vector([1, 0, 0]))
+        spin_ang_quat = Quaternion(Vector([0, 0, 1]), spin_ang)
 
         # calculate bend transform if needed
         if bend > 0:
@@ -64,26 +64,25 @@ class Leaf(object):
         vertices = []
         for vertex in base_shape[0]:
             # rotate to correct direction
-            vertex = vertex.copy()
-            vertex.rotate(Quaternion(Vector([0, 0, 1]), spin_ang))
-            vertex.rotate(trf)
+            n_vertex = vertex.copy()
+            n_vertex.rotate(spin_ang_quat)
+            n_vertex.rotate(trf)
 
             # apply bend if needed
             if bend > 0:
-                vertex.rotate(bend_trf_1)
-                vertex.rotate(bend_trf_2)
+                n_vertex.rotate(bend_trf_1)
+                n_vertex.rotate(bend_trf_2)
 
             # move to right position
-            vertex += self.position
+            n_vertex += self.position
+
             # add to vertex array
-            vertices.append(vertex)
+            vertices.append(n_vertex)
 
         # set face to refer to vertices at correct offset in big vertex list
         index *= len(vertices)
 
-        faces = []
-        for face in base_shape[1]:
-            faces.append([elem + index for elem in face])
+        faces = [[elem + index for elem in face] for face in base_shape[1]]
 
         return vertices, faces
 
@@ -97,7 +96,10 @@ class Leaf(object):
         self.right.rotate(bend_trf_1)
         normal = self.direction.cross(self.right)
         phi_bend = normal.declination()
+
         if phi_bend > pi / 2:
             phi_bend = phi_bend - pi
+
         bend_trf_2 = Quaternion(self.right, phi_bend * bend)
+
         return bend_trf_1, bend_trf_2

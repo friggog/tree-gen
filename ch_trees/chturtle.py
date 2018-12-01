@@ -1,8 +1,8 @@
 """3D Turtle implementation for use in tree generation module, also extends
 Blender Vector class with some useful methods"""
 
-import math
-import random
+from math import radians, degrees, atan2, sqrt
+from random import random as random_random
 
 import mathutils
 from mathutils import Quaternion
@@ -14,7 +14,7 @@ class Vector(mathutils.Vector):
     @staticmethod
     def random():
         """Normalised vector containing random entries in all dimensions"""
-        vec = Vector([random.random(), random.random(), random.random()])
+        vec = Vector([random_random(), random_random(), random_random()])
         vec.normalize()
         return vec
 
@@ -25,7 +25,7 @@ class Vector(mathutils.Vector):
 
     def declination(self):
         """Calculate declination of vector in degrees"""
-        return math.degrees(math.atan2(math.sqrt(self.x ** 2 + self.y ** 2), self.z))
+        return degrees(atan2(sqrt(self.x ** 2 + self.y ** 2), self.z))
 
 
 class CHTurtle(object):
@@ -54,7 +54,7 @@ class CHTurtle(object):
         axis = (self.dir.cross(self.right))
         axis.normalize()
 
-        rot_quat = Quaternion(axis, math.radians(angle))
+        rot_quat = Quaternion(axis, radians(angle))
 
         self.dir.rotate(rot_quat)
         self.dir.normalize()
@@ -64,25 +64,36 @@ class CHTurtle(object):
     def turn_left(self, angle):
         """Turn the turtle left about the axis perpendicular to the direction it
         is facing"""
-        self.turn_right(-angle)
+
+        axis = (self.dir.cross(self.right))
+        axis.normalize()
+
+        rot_quat = Quaternion(axis, radians(-angle))
+
+        self.dir.rotate(rot_quat)
+        self.dir.normalize()
+        self.right.rotate(rot_quat)
+        self.right.normalize()
 
     def pitch_up(self, angle):
         """Pitch the turtle up about the right axis"""
-        self.dir.rotate(Quaternion(self.right, math.radians(angle)))
+        self.dir.rotate(Quaternion(self.right, radians(angle)))
         self.dir.normalize()
 
     def pitch_down(self, angle):
         """Pitch the turtle down about the right axis"""
-        self.pitch_up(-angle)
+        self.dir.rotate(Quaternion(self.right, radians(-angle)))
+        self.dir.normalize()
 
     def roll_right(self, angle):
         """Roll the turtle right about the direction it is facing"""
-        self.right.rotate(Quaternion(self.dir, math.radians(angle)))
+        self.right.rotate(Quaternion(self.dir, radians(angle)))
         self.right.normalize()
 
     def roll_left(self, angle):
         """Roll the turtle left about the direction it is facing"""
-        self.roll_right(-angle)
+        self.right.rotate(Quaternion(self.dir, radians(-angle)))
+        self.right.normalize()
 
     def move(self, distance):
         """Move the turtle in the direction it is facing by specified distance"""

@@ -14,8 +14,11 @@ class _LogThread(threading.Thread):
 
         self.queue = queue
         self.daemon = True
+        self.running = False
 
     def run(self):
+        self.running = True
+
         while True:
             msg = self.queue.get()
 
@@ -25,15 +28,23 @@ class _LogThread(threading.Thread):
             sys.stdout.write(msg)
             sys.stdout.flush()
 
+        self.running = False
 
+
+thread_queue = None
+log_thread = None
 def get_logger(logging):
+    global log_thread, thread_queue
+
     if logging:
         thread_queue = Queue()
         log_thread = _LogThread(thread_queue)
         log_thread.start()
 
         def update_log(msg):
-            if not log_thread.is_alive():
+            global log_thread
+            if not log_thread.running:
+                log_thread = _LogThread(thread_queue)
                 log_thread.start()
 
             thread_queue.put(msg)
