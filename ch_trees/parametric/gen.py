@@ -17,10 +17,10 @@ from random import uniform as random_uniform
 # blender imports
 import bpy
 from enum import Enum
-from mathutils import Quaternion, Vector
+from mathutils import Quaternion
 
 from ch_trees import utilities
-from ch_trees.chturtle import CHTurtle, get_vector_declination
+from ch_trees.chturtle import Vector, CHTurtle
 from ch_trees.leaf import Leaf
 from ch_trees.parametric.tree_params.tree_param import TreeParam
 
@@ -94,7 +94,7 @@ def calc_helix_points(turtle, rad, pitch):
     rot_quat = Quaternion(Vector([0, 0, 1]), spin_ang)
 
     for p in points:
-        p.rotate(rot_quat)  # + trf)
+        p.rotate(rot_quat)
         p.rotate(trf)
 
     return points[1] - points[0], points[2] - points[0], points[3] - points[0], turtle.dir.copy()
@@ -645,7 +645,7 @@ class Tree(object):
                             split_corr_angle = 0
 
                         else:
-                            declination = get_vector_declination(turtle.dir)
+                            declination = turtle.dir.declination()
                             spl_angle = self.param.split_angle[depth] + random_uniform(-1, 1) * self.param.split_angle_v[
                                 depth] - declination
                             spl_angle = max(0, spl_angle)
@@ -784,7 +784,7 @@ class Tree(object):
                             spl_angle = 0
                             split_corr_angle = 0
                         else:
-                            declination = get_vector_declination(turtle.dir)
+                            declination = turtle.dir.declination()
                             spl_angle = self.param.split_angle[depth] + random_uniform(-1, 1) * self.param.split_angle_v[
                                 depth] - declination
                             spl_angle = max(0, spl_angle)
