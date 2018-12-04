@@ -6,7 +6,7 @@ from random import random
 from time import time
 
 import bpy
-from ch_trees.chturtle import CHTurtle, Vector
+from ch_trees.chturtle import CHTurtle, Vector, generate_random_vector
 from ch_trees.leaf import Leaf
 from mathutils import Quaternion
 
@@ -306,7 +306,7 @@ class LSystem(object):
             start_point.radius = line.bezier_points[-2].radius * 0.5 + width * 0.5
             # add bendiness to branch by rotating direction about random axis by random angle
             if self.bendiness > 0:
-                acc_dir = direction.rotated(Quaternion(Vector.random(), radians(self.bendiness * (random() * 35 - 20))))
+                acc_dir = direction.rotated(Quaternion(generate_random_vector(), radians(self.bendiness * (random() * 35 - 20))))
             else:
                 acc_dir = direction
             start_point.handle_right = point1 + handle_f * acc_dir

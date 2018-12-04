@@ -4,28 +4,26 @@ Blender Vector class with some useful methods"""
 from math import radians, degrees, atan2, sqrt
 from random import random as random_random
 
-import mathutils
-from mathutils import Quaternion
+from mathutils import Quaternion, Vector
 
 
-class Vector(mathutils.Vector):
-    """Extension of the standard Vector class with some useful methods"""
+def generate_random_vector():
+    """Normalised vector containing random entries in all dimensions"""
+    vec = Vector([random_random(), random_random(), random_random()])
+    vec.normalize()
+    return vec
 
-    @staticmethod
-    def random():
-        """Normalised vector containing random entries in all dimensions"""
-        vec = Vector([random_random(), random_random(), random_random()])
-        vec.normalize()
-        return vec
 
-    def rotated(self, rotation):
-        vec = self.copy()
-        vec.rotate(rotation)
-        return vec
+def get_rotated_vector(source_vector, rotation):
+    vec = source_vector.copy()
+    vec.rotate(rotation)
+    vec.normalize()
+    return vec
 
-    def declination(self):
-        """Calculate declination of vector in degrees"""
-        return degrees(atan2(sqrt(self.x ** 2 + self.y ** 2), self.z))
+
+def get_vector_declination(vect):
+    """Calculate declination of vector in degrees"""
+    return degrees(atan2(sqrt(vect.x ** 2 + vect.y ** 2), vect.z))
 
 
 class CHTurtle(object):
