@@ -56,7 +56,8 @@ class TreeParam(object):
             try:
                 # Ensure no methods are overwritten (prevent monkey-business)
                 if str(type(self.__getattribute__(k))) != "<class 'method'>":
-                    filtered[k] = v
+                    # Make a copy of lists to prevent cross-writing
+                    filtered[k] = v if type(v) != list else v[:]
 
             # Catch typos
             except AttributeError as ex:
@@ -67,7 +68,7 @@ class TreeParam(object):
         self.__dict__.update(filtered)
 
         # Specialized parameter formatting
-        for var in ['shape', 'levels', 'floor_splits']:
+        for var in ['shape', 'levels', 'floor_splits', 'leaf_shape', 'blossom_shape']:
             if var in filtered:
                 self.__dict__[var] = abs(int(filtered[var]))
 
