@@ -492,19 +492,19 @@ class Tree(object):
                 # negative curve_v so helix branch
                 pos = turtle.pos
                 if seg_ind == 0:
-                    new_point = copy(stem.curve.bezier_points[0])
+                    new_point = stem.curve.bezier_points[0]
                     new_point.co = pos.copy()
                     new_point.handle_right = hel_p_0 + pos
                     new_point.handle_left = pos.copy()
                 else:
                     stem.curve.bezier_points.add()
-                    new_point = copy(stem.curve.bezier_points[-1])
+                    new_point = stem.curve.bezier_points[-1]
                     if seg_ind == 1:
                         new_point.co = hel_p_2 + pos
                         new_point.handle_left = hel_p_1 + pos
                         new_point.handle_right = 2 * new_point.co - new_point.handle_left
                     else:
-                        prev_point = copy(stem.curve.bezier_points[-2])
+                        prev_point = stem.curve.bezier_points[-2]
                         new_point.co = hel_p_2.rotated(Quaternion(hel_axis, (seg_ind - 1) * pi))
                         new_point.co += prev_point.co
                         dif_p = (hel_p_2 - hel_p_1).rotated(Quaternion(hel_axis, (seg_ind - 1) * pi))

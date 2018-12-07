@@ -7,6 +7,7 @@ import imp
 import sys
 import os
 import pprint
+from copy import deepcopy
 
 from ch_trees import parametric
 from ch_trees import lsystems
@@ -187,7 +188,7 @@ class TreeGen(bpy.types.Operator):
         mod_name = scene.parametric_tree_type_input if scene.tree_gen_method_input == 'parametric' else scene.lsystem_tree_type_input
 
         if mod_name.startswith('custom'):
-            params = TreeGen.get_params_from_customizer()
+            params = deepcopy(TreeGen.get_params_from_customizer(context))
 
             parametric.gen.construct(params, scene.seed_input, scene.render_input, scene.render_output_path_input,
                                      scene.generate_leaves_input)
@@ -220,10 +221,9 @@ class TreeGen(bpy.types.Operator):
 
     # ---
     @staticmethod
-    def get_params_from_customizer():
-        scene = bpy.context.scene
+    def get_params_from_customizer(context):
+        scene = context.scene
 
-        # TODO: Fix randomization
         tree_base_splits = scene.tree_base_splits_limit_input
         if scene.tree_base_splits_randomize_input:
             tree_base_splits = random.randrange(0, tree_base_splits)
@@ -259,7 +259,7 @@ class TreeGenSaveFile(bpy.types.Operator):
 
     def execute(self, context):
         save_location = context.scene.custom_tree_save_location_input
-        params = TreeGen.get_params_from_customizer()
+        params = TreeGen.get_params_from_customizer(context)
 
         if not context.scene.custom_tree_save_overwrite_input:
             counter = 0
