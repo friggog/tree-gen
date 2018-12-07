@@ -174,8 +174,7 @@ class TreeGen(bpy.types.Operator):
     def execute(self, context):
         # "Generate Tree" button callback
 
-        thread = threading.Thread(target=self._construct, kwargs={'context': context})
-        thread.start()
+        threading.Thread(daemon=True, target=self._construct, kwargs={'context': context}).start()
 
         return {'FINISHED'}
 
