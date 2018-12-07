@@ -2,6 +2,7 @@ import bpy
 
 import traceback
 import threading
+import random
 import imp
 import sys
 import os
@@ -225,7 +226,7 @@ class TreeGen(bpy.types.Operator):
         # TODO: Fix randomization
         tree_base_splits = scene.tree_base_splits_limit_input
         if scene.tree_base_splits_randomize_input:
-            tree_base_splits *= 1
+            tree_base_splits = random.randrange(0, tree_base_splits)
 
         param_names = ['shape', 'g_scale', 'g_scale_v', 'levels', 'ratio', 'flare', 'ratio_power', 'floor_splits',
                        'base_size', 'down_angle', 'down_angle_v', 'rotate', 'rotate_v', 'branches',

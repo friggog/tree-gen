@@ -7,7 +7,7 @@ from collections import namedtuple
 from copy import copy
 from imp import reload  # required to fix Blender weirdness
 from math import ceil, sqrt, degrees, radians, tan, sin, cos, pow, pi
-from time import time
+import time
 
 # blender imports
 import bpy
@@ -161,13 +161,26 @@ class Tree(object):
 
     def make(self):
         """make the tree"""
-        start_time = time()
+        start_time = time.time()
         update_log('\n** Generating Tree **\n')
 
         # create parent object
         self.tree_obj = bpy.data.objects.new('Tree', None)
         bpy.context.scene.objects.link(self.tree_obj)
-        bpy.context.scene.objects.active = self.tree_obj
+
+        counter = 0
+        while counter < 5:
+            try:
+                bpy.context.scene.objects.active = self.tree_obj
+                break
+
+            except AttributeError:
+                time.sleep(.1)
+                counter += 1
+
+        if counter == 5:
+            print('FATAL :: TreeGen timed out while trying to acquire scene')
+            return
 
         # create branches
         self.create_branches()
@@ -176,7 +189,7 @@ class Tree(object):
         if self.generate_leaves:
             self.create_leaf_mesh()
 
-        g_time = time() - start_time
+        g_time = time.time() - start_time
 
         update_log('\nTree generated in %f seconds\n\n' % g_time)
 
@@ -215,7 +228,7 @@ class Tree(object):
 
         update_log('\nMaking Stems\n')
 
-        start_time = time()
+        start_time = time.time()
         self.branches_curve = bpy.data.curves.new('branches', type='CURVE')
         self.branches_curve.dimensions = '3D'
         self.branches_curve.resolution_u = 4
@@ -251,7 +264,7 @@ class Tree(object):
             trunk.resolution_u = 2
             self.make_stem(turtle, Stem(0, trunk))
 
-        b_time = time() - start_time
+        b_time = time.time() - start_time
         update_log('\nStems made: %i in %f seconds\n' % (self.stem_index, b_time))
 
         curve_points = 0
@@ -270,7 +283,7 @@ class Tree(object):
             return
 
         update_log('\nMaking Leaves\n')
-        start_time = time()
+        start_time = time.time()
 
         # Start loading spinner
         windman.progress_begin(0, len(self.leaves_array))
@@ -328,7 +341,7 @@ class Tree(object):
             blossom.from_pydata(blossom_verts, (), blossom_faces)
             # blossom.validate()
 
-        l_time = time() - start_time
+        l_time = time.time() - start_time
         update_log('\nMade %i leaves and %i blossoms in %f seconds\n' % (leaf_index, blossom_index, l_time))
 
         windman.progress_end()
