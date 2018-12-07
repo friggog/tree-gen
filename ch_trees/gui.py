@@ -270,7 +270,6 @@ class TreeGenSaveFile(bpy.types.Operator):
         with open(save_location, 'w') as output_file:
             print('params = ' + pprint.pformat(params), file=output_file)
 
-        print(context.scene.parametric_tree_type_input)
         context.scene.parametric_tree_type_input = 'custom'
 
         return {'FINISHED'}
