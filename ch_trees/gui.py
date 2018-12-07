@@ -5,26 +5,31 @@ import threading
 import imp
 import sys
 import os
+import pprint
 
 from ch_trees import parametric
 from ch_trees import lsystems
 
 
-def _get_tree_types():
+def _get_addon_path_details():
+    addon_path_parts = __file__.split(os.path.sep)[:-1]
+    addon_name = addon_path_parts[-1]
+    addon_path = os.path.sep.join(addon_path_parts)
+
+    return addon_path_parts, addon_name, addon_path
+
+
+def _get_tree_types(self, context):
     # Scan the the ch_trees addon folder for parameters and definitions,
     # then return two EnumProperty objects for use as the drop-down tree selector
     # (one for parametric, one for L-system)
 
-    addon_path_parts = __file__.split(os.path.sep)[:-1]
-    addon_name = addon_path_parts[-1]
-    addon_path = os.path.sep.join(addon_path_parts)
+    addon_path_parts, addon_name, addon_path = _get_addon_path_details()
 
     module_path_parts = [['parametric', 'tree_params'], ['lsystems', 'sys_defs']]
 
     # Build the drop-down menus
     enum_options = []
-    default_parametric_option = ''
-    default_lsystems_option = ''
     for modparts in module_path_parts:
         path = os.path.join(addon_path, *modparts)
         files = [f.split('.')[0] for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]
@@ -35,24 +40,7 @@ def _get_tree_types():
         # ex: 'Quaking Aspen'
         titles = [f.replace('_', ' ').title() for f in files]
 
-        options = []
-        if modules[0].startswith('ch_trees.parametric'):
-            default_parametric_option = modules[0]
-        else:
-            default_lsystems_option = modules[0]
-
-        for module, title in zip(modules, titles):
-            # Use quaking aspen as the default for the drop-down
-            if title == 'Quaking Aspen':
-                if module.startswith('parametric'):
-                    default_parametric_option = module
-                else:
-                    default_lsystems_option = module
-
-            # Item format: (internal value, label, hover-text)
-            options.append((module, title, title))
-
-        enum_options.append(options)
+        enum_options.append([(module, title, title) for module, title in zip(modules, titles)])
 
     # Add 'Custom' menu option to parametric mode
     enum_options[0].append(('custom', 'Custom', 'Custom parameters'))
@@ -60,10 +48,7 @@ def _get_tree_types():
     enum_options[0] = [tuple(option) for option in enum_options[0]]
     enum_options[1] = [tuple(option) for option in enum_options[1]]
 
-    parametric_enum = bpy.props.EnumProperty(name="", items=enum_options[0], default=default_parametric_option)
-    lsystems_enum = bpy.props.EnumProperty(name="", items=enum_options[1], default=default_lsystems_option)
-
-    return parametric_enum, lsystems_enum
+    return enum_options
 
 
 class TreeGen(bpy.types.Operator):
@@ -84,7 +69,13 @@ class TreeGen(bpy.types.Operator):
 
     # Drop-downs containing tree options for each generation method
     # These are switched between by TreeGenPanel.draw() based on the state of tree_gen_method_input
-    bpy.types.Scene.parametric_tree_type_input, bpy.types.Scene.lsystem_tree_type_input = _get_tree_types()
+    # parametric_enum = bpy.props.EnumProperty(name="", items=enum_options[0], default=default_parametric_option)
+    # lsystems_enum = bpy.props.EnumProperty(name="", items=enum_options[1], default=default_lsystems_option)
+
+    parametric_enum = bpy.props.EnumProperty(name="", items=lambda self, context: _get_tree_types(self, context)[0])
+    lsystems_enum = bpy.props.EnumProperty(name="", items=lambda self, context: _get_tree_types(self, context)[1])
+    bpy.types.Scene.parametric_tree_type_input = parametric_enum
+    bpy.types.Scene.lsystem_tree_type_input = lsystems_enum
 
     # Nothing exciting here. Seed, leaf toggle, and simplify geometry toggle.
     bpy.types.Scene.seed_input = bpy.props.IntProperty(name="", default=0, min=0, max=9999999)
@@ -172,6 +163,11 @@ class TreeGen(bpy.types.Operator):
     # Rate at which blossoms occur relative to leaves
     bpy.types.Scene.tree_blossom_rate_input = bpy.props.FloatProperty(name="", default=0, min=0, max=1)
 
+    # Save location for custom tree params
+    bpy.types.Scene.custom_tree_save_overwrite_input = bpy.props.BoolProperty(name="Overwrite if file exists", default=False)
+    tree_save_location = os.path.sep.join((_get_addon_path_details()[2], 'parametric', 'tree_params', 'my_custom_tree.py'))
+    bpy.types.Scene.custom_tree_save_location_input = bpy.props.StringProperty(name="", default=tree_save_location)
+
     # ---
     def execute(self, context):
         # "Generate Tree" button callback
@@ -190,7 +186,8 @@ class TreeGen(bpy.types.Operator):
         mod_name = scene.parametric_tree_type_input if scene.tree_gen_method_input == 'parametric' else scene.lsystem_tree_type_input
 
         if mod_name.startswith('custom'):
-            params = self._get_params_from_customizer(scene)
+            params = TreeGen.get_params_from_customizer()
+
             parametric.gen.construct(params, scene.seed_input, scene.render_input, scene.render_output_path_input,
                                      scene.generate_leaves_input)
 
@@ -221,7 +218,10 @@ class TreeGen(bpy.types.Operator):
             sys.stdout.flush()
 
     # ---
-    def _get_params_from_customizer(self, scene):
+    @staticmethod
+    def get_params_from_customizer():
+        scene = bpy.context.scene
+
         # TODO: Fix randomization
         tree_base_splits = scene.tree_base_splits_limit_input
         if scene.tree_base_splits_randomize_input:
@@ -246,6 +246,34 @@ class TreeGen(bpy.types.Operator):
         params['base_splits'] = tree_base_splits
 
         return params
+
+
+class TreeGenSaveFile(bpy.types.Operator):
+    """Button to save custom tree parameters"""
+
+    bl_idname = "object.tree_gen_custom_save"
+    bl_category = "TreeGen"
+    bl_label = "Save custom tree"
+    bl_options = {'REGISTER'}
+
+    def execute(self, context):
+        save_location = context.scene.custom_tree_save_location_input
+        params = TreeGen.get_params_from_customizer()
+
+        if not context.scene.custom_tree_save_overwrite_input:
+            counter = 0
+            save_location_no_ext = save_location[:-3]
+            while os.path.isfile(save_location):
+                save_location = '{}_{}.py'.format(save_location_no_ext, counter)
+                counter += 1
+
+        with open(save_location, 'w') as output_file:
+            print('params = ' + pprint.pformat(params), file=output_file)
+
+        print(context.scene.parametric_tree_type_input)
+        context.scene.parametric_tree_type_input = 'custom'
+
+        return {'FINISHED'}
 
 
 class TreeGenPanel(bpy.types.Panel):
@@ -351,7 +379,15 @@ class TreeGenPanel(bpy.types.Panel):
                 label_row('Blossom rate', 'tree_blossom_rate_input', False)
                 label_row('Blossom scale', 'tree_blossom_scale_input', False)
 
+            layout.separator()
+            layout.separator()
+            label_row('Save location', 'custom_tree_save_location_input', False)
+            label_row('Overwrite if exists', 'custom_tree_save_overwrite_input', True, True)
+            layout.row()
+            layout.operator(TreeGenSaveFile.bl_idname)
+
         layout.separator()
         layout.row()
+        layout.separator()
         layout.operator(TreeGen.bl_idname)
         layout.separator()
