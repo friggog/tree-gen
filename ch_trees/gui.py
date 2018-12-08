@@ -213,9 +213,8 @@ class TreeGen(bpy.types.Operator):
 
             except Exception as ex:
                 sys.stdout.write('\n{}\n'.format(traceback.print_exec()))
-                sys.stdout.flush()
+                sys.stdout.write('Geometry simplification failed\n\n')
 
-            sys.stdout.write('Geometry simplification complete\n\n')
             sys.stdout.flush()
 
     # ----
