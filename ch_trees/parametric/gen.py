@@ -3,7 +3,6 @@
 # standard imports
 from collections import namedtuple
 from copy import copy
-from imp import reload  # required to fix Blender weirdness
 from math import ceil, sqrt, degrees, radians, tan, sin, cos, pow, pi
 import time
 
@@ -1314,4 +1313,4 @@ def construct(params, seed=0, render=False, out_path=None, generate_leaves=True)
         bpy.data.scenes['Scene'].render.filepath = out_path
         bpy.ops.render.render(write_still=True)
 
-    update_log('kill_thread')
+    update_log('kill_thread')  # Gracefully shuts down logger thread

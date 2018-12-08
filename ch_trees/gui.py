@@ -59,7 +59,7 @@ class TreeGen(bpy.types.Operator):
     bl_idname = "object.tree_gen"
     bl_category = "TreeGen"
     bl_label = "Generate Tree"
-    bl_options = {'REGISTER', 'UNDO'}
+    bl_options = {'REGISTER'}
 
     # ---
     # Note: an empty-string 'name' parameter removes the default label from inputs
@@ -183,33 +183,40 @@ class TreeGen(bpy.types.Operator):
         scene = context.scene
         mod_name = scene.parametric_tree_type_input if scene.tree_gen_method_input == 'parametric' else scene.lsystem_tree_type_input
 
-        if mod_name.startswith('custom'):
-            parametric.gen.construct(params, scene.seed_input, scene.render_input, scene.render_output_path_input,
-                                     scene.generate_leaves_input)
+        try:
+            if mod_name.startswith('custom'):
+                parametric.gen.construct(params, scene.seed_input, scene.render_input, scene.render_output_path_input,
+                                         scene.generate_leaves_input)
 
-        elif mod_name.startswith('ch_trees.parametric'):
-            mod = __import__(mod_name, fromlist=[''])
-            imp.reload(mod)
-            parametric.gen.construct(mod.params, scene.seed_input, scene.render_input, scene.render_output_path_input, scene.generate_leaves_input)
+            elif mod_name.startswith('ch_trees.parametric'):
+                mod = __import__(mod_name, fromlist=[''])
+                imp.reload(mod)
+                parametric.gen.construct(mod.params, scene.seed_input, scene.render_input, scene.render_output_path_input,
+                                         scene.generate_leaves_input)
 
-        else:
-            lsystems.gen.construct(mod_name, scene.generate_leaves_input)
+            else:
+                lsystems.gen.construct(mod_name, scene.generate_leaves_input)
 
-        if scene.simplify_geometry_input:
-            from . import utilities
+            if scene.simplify_geometry_input:
+                from . import utilities
 
-            sys.stdout.write('Simplifying tree branch geometry. Blender will appear to crash; be patient.\n')
-            sys.stdout.flush()
+                sys.stdout.write('Simplifying tree branch geometry. Blender will appear to crash; be patient.\n')
+                sys.stdout.flush()
 
-            # Catch exceptions and print them as strings
-            # This will hopefully reduce random crashes
-            try:
-                utilities.simplify_branch_geometry(context)
+                # Catch exceptions and print them as strings
+                # This will hopefully reduce random crashes
+                try:
+                    utilities.simplify_branch_geometry(context)
 
-            except Exception as ex:
-                sys.stdout.write('\n{}\n'.format(traceback.print_exec()))
-                sys.stdout.write('Geometry simplification failed\n\n')
+                except Exception:
+                    sys.stdout.write('\n{}\n'.format(traceback.format_exc()))
+                    sys.stdout.write('Geometry simplification failed\n\n')
+                    sys.stdout.flush()
 
+        # Reduce chance of Blender crashing when generation fails or the user does something ill-advised
+        except Exception:
+            sys.stdout.write('\n{}\n'.format(traceback.format_exc()))
+            sys.stdout.write('Tree generation failed\n\n')
             sys.stdout.flush()
 
     # ----
