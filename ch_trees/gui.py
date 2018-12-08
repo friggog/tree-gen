@@ -71,14 +71,12 @@ class TreeGen(bpy.types.Operator):
 
     # Drop-downs containing tree options for each generation method
     # These are switched between by TreeGenPanel.draw() based on the state of tree_gen_method_input
-    #parametric_enum = bpy.props.EnumProperty(name="", items=lambda self, context: _get_tree_types(self, context)[0])
-    #lsystems_enum = bpy.props.EnumProperty(name="", items=lambda self, context: _get_tree_types(self, context)[1])
+    # parametric_enum = bpy.props.EnumProperty(name="", items=lambda self, context: _get_tree_types(self, context)[0])
+    # lsystems_enum = bpy.props.EnumProperty(name="", items=lambda self, context: _get_tree_types(self, context)[1])
 
-    parametric_enum = bpy.props.EnumProperty(name="", items=_get_tree_types()[0])
-    lsystems_enum = bpy.props.EnumProperty(name="", items=_get_tree_types()[1])
-
-    bpy.types.Scene.parametric_tree_type_input = parametric_enum
-    bpy.types.Scene.lsystem_tree_type_input = lsystems_enum
+    parametric_items, lsystems_items = _get_tree_types()
+    bpy.types.Scene.parametric_tree_type_input = bpy.props.EnumProperty(name="", items=parametric_items)
+    bpy.types.Scene.lsystem_tree_type_input = bpy.props.EnumProperty(name="", items=lsystems_items)
 
     # Nothing exciting here. Seed, leaf toggle, and simplify geometry toggle.
     bpy.types.Scene.seed_input = bpy.props.IntProperty(name="", default=0, min=0, max=9999999)
@@ -175,7 +173,7 @@ class TreeGen(bpy.types.Operator):
     def execute(self, context):
         # "Generate Tree" button callback
 
-        params = self._get_params_from_customizer(context)
+        params = TreeGen.get_params_from_customizer(context)
         threading.Thread(daemon=True, target=self._construct, kwargs={'context': context, 'params': params}).start()
 
         return {'FINISHED'}
@@ -218,7 +216,8 @@ class TreeGen(bpy.types.Operator):
             sys.stdout.flush()
 
     # ----
-    def _get_params_from_customizer(self, context):
+    @staticmethod
+    def get_params_from_customizer(context):
         scene = context.scene
 
         tree_base_splits = scene.tree_base_splits_limit_input
@@ -247,31 +246,33 @@ class TreeGen(bpy.types.Operator):
         return params
 
 
-# class TreeGenSaveFile(bpy.types.Operator):
-#     """Button to save custom tree parameters"""
-#
-#     bl_idname = "object.tree_gen_custom_save"
-#     bl_category = "TreeGen"
-#     bl_label = "Save custom tree"
-#     bl_options = {'REGISTER'}
-#
-#     def execute(self, context):
-#         save_location = context.scene.custom_tree_save_location_input
-#         params = get_params_from_customizer(context)
-#
-#         if not context.scene.custom_tree_save_overwrite_input:
-#             counter = 0
-#             save_location_no_ext = save_location[:-3]
-#             while os.path.isfile(save_location):
-#                 save_location = '{}_{}.py'.format(save_location_no_ext, counter)
-#                 counter += 1
-#
-#         with open(save_location, 'w') as output_file:
-#             print('params = ' + pprint.pformat(params), file=output_file)
-#
-#         context.scene.parametric_tree_type_input = 'custom'
-#
-#         return {'FINISHED'}
+class TreeGenSaveFile(bpy.types.Operator):
+    """Button to save custom tree parameters"""
+
+    bl_idname = "object.tree_gen_custom_save"
+    bl_category = "TreeGen"
+    bl_label = "Save custom tree"
+    bl_options = {'REGISTER'}
+
+    def execute(self, context):
+        save_location = context.scene.custom_tree_save_location_input
+        params = TreeGen.get_params_from_customizer(context)
+
+        if not context.scene.custom_tree_save_overwrite_input:
+            counter = 0
+            save_location_no_ext = save_location[:-3]
+            while os.path.isfile(save_location):
+                save_location = '{}_{}.py'.format(save_location_no_ext, counter)
+                counter += 1
+
+        with open(save_location, 'w') as output_file:
+            print('params = ' + pprint.pformat(params), file=output_file)
+
+        parametric_items, _ = _get_tree_types()
+        bpy.types.Scene.parametric_tree_type_input = bpy.props.EnumProperty(name="", items=parametric_items)
+        context.scene.parametric_tree_type_input = 'custom'
+
+        return {'FINISHED'}
 
 
 class TreeGenPanel(bpy.types.Panel):
@@ -330,7 +331,6 @@ class TreeGenPanel(bpy.types.Panel):
             layout.separator()
 
         # Show customizer
-        """
         if mode == 'parametric' and scene.parametric_tree_type_input == 'custom':
             layout.separator()
 
@@ -383,8 +383,7 @@ class TreeGenPanel(bpy.types.Panel):
             label_row('Save location', 'custom_tree_save_location_input', False)
             label_row('Overwrite if exists', 'custom_tree_save_overwrite_input', True, True)
             layout.row()
-            # layout.operator(TreeGenSaveFile.bl_idname)
-        """
+            layout.operator(TreeGenSaveFile.bl_idname)
 
         layout.separator()
         layout.row()
