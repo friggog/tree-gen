@@ -71,9 +71,6 @@ class TreeGen(bpy.types.Operator):
 
     # Drop-downs containing tree options for each generation method
     # These are switched between by TreeGenPanel.draw() based on the state of tree_gen_method_input
-    # parametric_enum = bpy.props.EnumProperty(name="", items=lambda self, context: _get_tree_types(self, context)[0])
-    # lsystems_enum = bpy.props.EnumProperty(name="", items=lambda self, context: _get_tree_types(self, context)[1])
-
     parametric_items, lsystems_items = _get_tree_types()
     bpy.types.Scene.parametric_tree_type_input = bpy.props.EnumProperty(name="", items=parametric_items)
     bpy.types.Scene.lsystem_tree_type_input = bpy.props.EnumProperty(name="", items=lsystems_items)
@@ -221,8 +218,8 @@ class TreeGen(bpy.types.Operator):
         scene = context.scene
 
         tree_base_splits = scene.tree_base_splits_limit_input
-        #if scene.tree_base_splits_randomize_input:
-        #    tree_base_splits = random.randrange(0, tree_base_splits)
+        if scene.tree_base_splits_randomize_input:
+            tree_base_splits = random.randrange(0, tree_base_splits)
 
         param_names = ['shape', 'g_scale', 'g_scale_v', 'levels', 'ratio', 'flare', 'ratio_power', 'floor_splits',
                        'base_size', 'down_angle', 'down_angle_v', 'rotate', 'rotate_v', 'branches',

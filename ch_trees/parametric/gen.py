@@ -178,20 +178,7 @@ class Tree(object):
         # create parent object
         self.tree_obj = bpy.data.objects.new('Tree', None)
         bpy.context.scene.objects.link(self.tree_obj)
-
-        #counter = 0
-        #while counter < 5:
-        #    try:
         bpy.context.scene.objects.active = self.tree_obj
-        #        break
-
-        #    except AttributeError:
-        #        time.sleep(.1)
-        #        counter += 1
-
-        #if counter == 5:
-        #    print('FATAL :: TreeGen timed out while trying to acquire scene')
-        #    return
 
         # create branches
         self.create_branches()
@@ -1317,6 +1304,9 @@ def construct(params, seed=0, render=False, out_path=None, generate_leaves=True)
     t = Tree(TreeParam(params), generate_leaves)
     t.make()
 
+    # Try to get unneeded data out of memory ASAP
+    del t.leaves_array
+    del t.branches_curve
     del t
 
     if render:
