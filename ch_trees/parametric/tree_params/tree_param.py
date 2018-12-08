@@ -56,8 +56,7 @@ class TreeParam(object):
             try:
                 # Ensure no methods are overwritten (prevent monkey-business)
                 if str(type(self.__getattribute__(k))) != "<class 'method'>":
-                    # Make a copy of lists to prevent cross-writing
-                    filtered[k] = v if type(v) != list else v[:]
+                    filtered[k] = v
 
             # Catch typos
             except AttributeError as ex:

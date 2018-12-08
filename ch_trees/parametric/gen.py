@@ -168,19 +168,19 @@ class Tree(object):
         self.tree_obj = bpy.data.objects.new('Tree', None)
         bpy.context.scene.objects.link(self.tree_obj)
 
-        counter = 0
-        while counter < 5:
-            try:
-                bpy.context.scene.objects.active = self.tree_obj
-                break
+        #counter = 0
+        #while counter < 5:
+        #    try:
+        bpy.context.scene.objects.active = self.tree_obj
+        #        break
 
-            except AttributeError:
-                time.sleep(.1)
-                counter += 1
+        #    except AttributeError:
+        #        time.sleep(.1)
+        #        counter += 1
 
-        if counter == 5:
-            print('FATAL :: TreeGen timed out while trying to acquire scene')
-            return
+        #if counter == 5:
+        #    print('FATAL :: TreeGen timed out while trying to acquire scene')
+        #    return
 
         # create branches
         self.create_branches()
