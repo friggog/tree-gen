@@ -30,9 +30,8 @@ def simplify_branch_geometry(context, angle_limit=1.5):
     br_bmesh.from_mesh(old_branches.to_mesh(scene, False, 'RENDER'))
 
     # Remove the old branches from the scene and purge them from memory
-    scene.objects.unlink(old_branches)
-    bpy.data.curves.remove(old_branches.data)
-    bpy.data.objects.remove(old_branches)
+    bpy.data.curves.remove(old_branches.data, True)
+    bpy.data.objects.remove(old_branches, True)
 
     # Perform a limited dissolve
     bmesh.ops.dissolve_limit(br_bmesh, verts=br_bmesh.verts, edges=br_bmesh.edges, angle_limit=radians(angle_limit))
