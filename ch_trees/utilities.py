@@ -3,6 +3,56 @@ import bmesh
 
 from math import radians
 
+import sys
+import threading
+from queue import Queue
+
+
+class _LogThread(threading.Thread):
+    def __init__(self, queue):
+        threading.Thread.__init__(self)
+
+        self.queue = queue
+        self.daemon = True
+        self.running = False
+
+    def run(self):
+        self.running = True
+
+        while True:
+            msg = self.queue.get()
+
+            if msg == 'kill_thread':
+                break
+
+            sys.stdout.write(msg)
+            sys.stdout.flush()
+
+        self.running = False
+
+
+thread_queue = None
+log_thread = None
+def get_logger(logging):
+    global log_thread, thread_queue
+
+    if logging:
+        thread_queue = Queue()
+        log_thread = _LogThread(thread_queue)
+        log_thread.start()
+
+        def update_log(msg):
+            global log_thread
+            if not log_thread.running:
+                log_thread = _LogThread(thread_queue)
+                log_thread.start()
+
+            thread_queue.put(msg)
+
+        return update_log
+
+    return lambda _: None
+
 
 def simplify_branch_geometry(context, angle_limit=1.5):
     """

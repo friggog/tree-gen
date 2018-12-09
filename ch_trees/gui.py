@@ -112,11 +112,12 @@ class TreeGen(bpy.types.Operator):
             # This will hopefully reduce random crashes
             try:
                 utilities.simplify_branch_geometry(context)
+                sys.stdout.write('Geometry simplification complete\n\n')
+
             except Exception as ex:
                 sys.stdout.write('\n{}\n'.format(traceback.print_exec()))
-                sys.stdout.flush()
+                sys.stdout.write('Geometry simplification failed\n\n')
 
-            sys.stdout.write('Geometry simplification complete\n\n')
             sys.stdout.flush()
 
 
