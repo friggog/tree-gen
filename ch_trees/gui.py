@@ -113,22 +113,19 @@ class TreeGen(bpy.types.Operator):
         if scene.simplify_geometry_input:
             from . import utilities
 
-            sys.stdout.write('Simplifying tree branch geometry. Blender will appear to crash; be patient.\n')
-            sys.stdout.flush()
+            update_log('\nSimplifying tree branch geometry. Blender will appear to crash; be patient.\n')
 
             # Catch exceptions and print them as strings
             # This will hopefully reduce random crashes
             try:
                 utilities.simplify_branch_geometry(context)
-                sys.stdout.write('Geometry simplification complete\n\n')
+                update_log('Geometry simplification complete\n\n')
 
             except Exception as ex:
-                sys.stdout.write('\n{}\n'.format(traceback.print_exc()))
-                sys.stdout.write('Geometry simplification failed\n\n')
+                update_log('\n{}\n'.format(traceback.print_exc()))
+                update_log('Geometry simplification failed\n\n')
 
-            sys.stdout.flush()
-
-        update_log('\nTree generated in %f seconds\n\n'.format(time.time() - start_time))
+        update_log('\nTree generated in {} seconds\n\n'.format(time.time() - start_time))
 
 
 class TreeGenPanel(bpy.types.Panel):
