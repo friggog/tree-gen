@@ -70,18 +70,21 @@ def simplify_branch_geometry(context, angle_limit=1.5):
     except AttributeError:
         raise Exception('Could not find tree while attempting to simplify branch geometry')
 
+    def get_branch_child():
+        return [child for child in tree.children if 'Branches' in child.name][0]
+
     try:
-        old_branches = [child for child in tree.children if 'Branches' in child.name][0]
+        get_branch_child()
     except IndexError:
         raise Exception('No branches found while simplifying branch geometry')
 
     # Convert the branches curve to a mesh, then get an editable copy
     br_bmesh = bmesh.new()
-    br_bmesh.from_mesh(old_branches.to_mesh(scene, False, 'RENDER'))
+    br_bmesh.from_mesh(get_branch_child().to_mesh(scene, False, 'RENDER'))
 
     # Remove the old branches from the scene and purge them from memory
-    bpy.data.curves.remove(old_branches.data, True)
-    bpy.data.objects.remove(old_branches, True)
+    bpy.data.curves.remove(get_branch_child().data, True)
+    bpy.data.objects.remove(get_branch_child(), True)
 
     # Perform a limited dissolve
     bmesh.ops.dissolve_limit(br_bmesh, verts=br_bmesh.verts, edges=br_bmesh.edges, angle_limit=radians(angle_limit))
