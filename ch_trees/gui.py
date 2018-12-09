@@ -7,9 +7,10 @@ import sys
 import os
 import time
 
-from ch_trees import parametric
-from ch_trees import lsystems
-from ch_trees.utilities import update_log
+from ch_trees import parametric, lsystems
+
+
+update_log = parametric.gen.update_log
 
 
 def _get_tree_types():
