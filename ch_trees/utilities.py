@@ -55,7 +55,10 @@ def get_logger(logging):
 
 
 def object_deleted(o):
-    return bpy.data.objects.get(o.name, None) is not None
+    try:
+        return bpy.data.objects.get(o.name, None) is not None
+    except ReferenceError:  # o is deleted, so accessing name raises an error
+        return True
 
 
 def simplify_branch_geometry(context, angle_limit=1.5):
