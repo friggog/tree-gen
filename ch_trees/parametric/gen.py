@@ -1298,7 +1298,7 @@ def construct(params, seed=0, render=False, out_path=None, generate_leaves=True)
     Tree(TreeParam(params), generate_leaves).make()
 
     if render:
-        update_log('Rendering Scene\n')
+        update_log('\nRendering Scene\n')
 
         context = bpy.context
 
