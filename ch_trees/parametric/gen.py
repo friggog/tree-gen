@@ -1317,7 +1317,13 @@ def construct(params, seed=0, render=False, out_path=None, generate_leaves=True)
         bpy.ops.view3d.camera_to_view_selected()
 
         time.sleep(.2)
-        camera = bpy.data.objects["Camera"]
+
+        try:
+            camera = bpy.data.objects["Camera"]
+        except KeyError:
+            print('Could not find camera to capture with')
+            return
+
         inv = camera.matrix_world.copy()
         inv.invert()
 
