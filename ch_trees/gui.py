@@ -469,7 +469,7 @@ class TreeGenPanel(bpy.types.Panel):
             label_row('Level count', 'tree_levels_input', container=box)
             label_row('Trunk count', 'tree_floor_splits_input', container=box)
 
-            layout.separator()
+            box.separator()
             label_row('Prune ratio', 'tree_prune_ratio_input', container=box)
             label_row('Prune width', 'tree_prune_width_input', container=box)
             label_row('Prune width peak', 'tree_prune_width_peak_input', container=box)
