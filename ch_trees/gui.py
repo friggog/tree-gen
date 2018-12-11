@@ -137,17 +137,17 @@ class TreeGen(bpy.types.Operator):
     _scene.tree_flare_input = _props.FloatProperty(name="", default=.6, min=0, max=10)
 
     # Branch appearance
-    _scene.tree_branches_input = _props.FloatVectorProperty(name="", default=(-.01, 50, 30, 10), size=4, min=-.01, max=360)
+    _scene.tree_branches_input = _props.FloatVectorProperty(name="", default=(0, 50, 30, 10), size=4, min=0, max=360)
 
-    _scene.tree_length_input = _props.FloatVectorProperty(name="", default=(1, 0.3, 0.6, 0), size=4, min=-0, max=1)
+    _scene.tree_length_input = _props.FloatVectorProperty(name="", default=(1, 0.3, 0.6, 0), size=4, min=0, max=1)
     _scene.tree_length_v_input = _props.FloatVectorProperty(name="", default=(0, 0, 0, 0), size=4, min=-0, max=1)
 
-    _scene.tree_branch_dist_input = _props.FloatVectorProperty(name="", default=(-.01, 0, 0, 0), size=4, min=-.01, max=1)
+    _scene.tree_branch_dist_input = _props.FloatVectorProperty(name="", default=(0, 0, 0, 0), size=4, min=0, max=1)
 
     _scene.tree_taper_input = _props.FloatVectorProperty(name="", default=(1, 1, 1, 1), size=4, min=-0, max=1)
     _scene.tree_radius_mod_input = _props.FloatVectorProperty(name="", default=(1, 1, 1, 1), size=4, min=0, max=1)
 
-    _scene.tree_bend_v_input = _props.FloatVectorProperty(name="", default=(-.01, 50, 0, 0), size=4, min=-.01, max=360)
+    _scene.tree_bend_v_input = _props.FloatVectorProperty(name="", default=(0, 50, 0, 0), size=4, min=0, max=360)
 
     _scene.tree_curve_res_input = _props.FloatVectorProperty(name="", default=(5, 5, 3, 1), size=4, min=1, max=10)
     _scene.tree_curve_input = _props.FloatVectorProperty(name="", default=(0, -40, -40, 0), size=4, min=-360, max=360)
@@ -161,11 +161,11 @@ class TreeGen(bpy.types.Operator):
     # "the turning of all or part of an organism in a particular direction in response to an external stimulus"
     _scene.tree_tropism_input = _props.FloatVectorProperty(name="", default=(0, 0, 0.5), size=3, min=0, max=1)
 
-    _scene.tree_down_angle_input = _props.FloatVectorProperty(name="", default=(-.01, 140, 140, 77), size=4, min=-.01, max=360)
-    _scene.tree_down_angle_v_input = _props.FloatVectorProperty(name="", default=(-.01, -50, 10, 10), size=4, min=--.01, max=360)
+    _scene.tree_down_angle_input = _props.FloatVectorProperty(name="", default=(0, 140, 140, 77), size=4, min=0, max=360)
+    _scene.tree_down_angle_v_input = _props.FloatVectorProperty(name="", default=(0, -50, 10, 10), size=4, min=0, max=360)
 
-    _scene.tree_rotate_input = _props.FloatVectorProperty(name="", default=(-.01, 140, 140, 77), size=4, min=-.01, max=360)
-    _scene.tree_rotate_v_input = _props.FloatVectorProperty(name="", default=(-.01, 0, 0, 0), size=4, min=--.01)
+    _scene.tree_rotate_input = _props.FloatVectorProperty(name="", default=(0, 140, 140, 77), size=4, min=0, max=360)
+    _scene.tree_rotate_v_input = _props.FloatVectorProperty(name="", default=(0, 0, 0, 0), size=4, min=0)
 
 
     # ----
