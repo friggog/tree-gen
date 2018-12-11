@@ -5,7 +5,7 @@ from collections import namedtuple
 from copy import copy
 from imp import reload  # required to fix Blender weirdness
 from math import ceil, sqrt, degrees, radians, tan, sin, cos, pow, pi
-from time import time
+import time
 
 # Import random functions into a closer namespace to alleviate some lookup costs
 import random
@@ -17,6 +17,7 @@ from random import uniform as random_uniform
 # blender imports
 import bpy
 from enum import Enum
+import mathutils
 from mathutils import Quaternion
 
 from ch_trees import utilities
@@ -220,7 +221,7 @@ class Tree(object):
 
         update_log('\nMaking Stems\n')
 
-        start_time = time()
+        start_time = time.time()
         self.branches_curve = bpy.data.curves.new('branches', type='CURVE')
         self.branches_curve.dimensions = '3D'
         self.branches_curve.resolution_u = 4
@@ -257,7 +258,7 @@ class Tree(object):
 
             self.make_stem(turtle, Stem(0, trunk))
 
-        b_time = time() - start_time
+        b_time = time.time() - start_time
         update_log('\nStems made: %i in %f seconds\n' % (self.stem_index, b_time))
 
         curve_points = 0
@@ -276,7 +277,7 @@ class Tree(object):
             return
 
         update_log('\nMaking Leaves\n')
-        start_time = time()
+        start_time = time.time()
 
         # Start loading spinner
         windman.progress_begin(0, len(self.leaves_array))
@@ -348,7 +349,7 @@ class Tree(object):
             blossom.from_pydata(blossom_verts, (), blossom_faces)
             # blossom.validate()
 
-        l_time = time() - start_time
+        l_time = time.time() - start_time
         update_log('\nMade %i leaves and %i blossoms in %f seconds\n' % (leaf_index, blossom_index, l_time))
 
         windman.progress_end()
@@ -1298,6 +1299,32 @@ def construct(params, seed=0, render=False, out_path=None, generate_leaves=True)
 
     if render:
         update_log('Rendering Scene\n')
+
+        context = bpy.context
+
+        targets = None
+        for obj in context.scene.objects:
+            obj.select = False
+            targets = [obj] + [child for child in obj.children] if obj.name.startswith('Tree') else targets
+
+        if targets is None:
+            print('Could not find a tree to render')
+            return
+
+        for target in targets:
+            target.select = True
+
+        bpy.ops.view3d.camera_to_view_selected()
+
+        time.sleep(.2)
+        camera = bpy.data.objects["Camera"]
+        inv = camera.matrix_world.copy()
+        inv.invert()
+
+        vec = mathutils.Vector((0.0, 0, 1.0))  # move camera back a bit
+        vec_rot = vec * inv  # vec aligned to local axis
+        camera.location = camera.location + vec_rot
+
         bpy.data.scenes['Scene'].render.filepath = out_path
         bpy.ops.render.render(write_still=True)
 
