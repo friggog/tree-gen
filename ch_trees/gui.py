@@ -5,9 +5,12 @@ import threading
 import imp
 import sys
 import os
+import time
 
-from ch_trees import parametric
-from ch_trees import lsystems
+from ch_trees import parametric, lsystems
+
+
+update_log = parametric.gen.update_log
 
 
 def _get_tree_types():
@@ -94,31 +97,37 @@ class TreeGen(bpy.types.Operator):
         scene = context.scene
         mod_name = scene.para_tree_type_input if scene.tree_gen_method_input == 'parametric' else scene.lsys_tree_type_input
 
+        update_log('\n** Generating Tree **\n')
+
         if mod_name.startswith('ch_trees.parametric'):
             mod = __import__(mod_name, fromlist=[''])
             imp.reload(mod)
+
+            start_time = time.time()
             parametric.gen.construct(mod.params, scene.seed_input, scene.render_input, scene.render_output_path_input, scene.generate_leaves_input)
 
         else:
+            start_time = time.time()
             lsystems.gen.construct(mod_name, scene.generate_leaves_input)
 
         if scene.simplify_geometry_input:
             from . import utilities
 
-            sys.stdout.write('Simplifying tree branch geometry. Blender will appear to crash; be patient.\n')
-            sys.stdout.flush()
-
             # Catch exceptions and print them as strings
             # This will hopefully reduce random crashes
             try:
+                # update_log doesn't get a chance to print before Blender locks up, so a direct print is necessary
+                sys.stdout.write('\nSimplifying tree branch geometry. Blender will appear to crash; be patient.\n')
+                sys.stdout.flush()
+
                 utilities.simplify_branch_geometry(context)
-                sys.stdout.write('Geometry simplification complete\n\n')
+                update_log('Geometry simplification complete\n\n')
 
             except Exception as ex:
-                sys.stdout.write('\n{}\n'.format(traceback.print_exec()))
-                sys.stdout.write('Geometry simplification failed\n\n')
+                update_log('\n{}\n'.format(traceback.print_exc()))
+                update_log('Geometry simplification failed\n\n')
 
-            sys.stdout.flush()
+        update_log('Tree generated in {:.6f} seconds\n\n'.format(time.time() - start_time))
 
 
 class TreeGenPanel(bpy.types.Panel):
