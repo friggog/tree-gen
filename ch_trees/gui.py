@@ -6,12 +6,15 @@ import random
 import imp
 import sys
 import os
+import time
 import pprint
 from copy import deepcopy
 
-from ch_trees import parametric
+from ch_trees import parametric, lsystems
 from ch_trees.parametric.tree_params import tree_param
-from ch_trees import lsystems
+
+
+update_log = parametric.gen.update_log
 
 
 def _get_addon_path_details():
@@ -225,35 +228,43 @@ class TreeGen(bpy.types.Operator):
         scene = context.scene
         mod_name = scene.parametric_tree_type_input if scene.tree_gen_method_input == 'parametric' else scene.lsystem_tree_type_input
 
+        update_log('\n** Generating Tree **\n')
         try:
             if mod_name.startswith('custom'):
+                start_time = time.time()
                 parametric.gen.construct(params, scene.seed_input, scene.render_input, scene.render_output_path_input,
                                          scene.generate_leaves_input)
 
             elif mod_name.startswith('ch_trees.parametric'):
                 mod = __import__(mod_name, fromlist=[''])
                 imp.reload(mod)
+                
+                start_time = time.time()
                 parametric.gen.construct(mod.params, scene.seed_input, scene.render_input, scene.render_output_path_input,
                                          scene.generate_leaves_input)
 
             else:
+                start_time = time.time()
                 lsystems.gen.construct(mod_name, scene.generate_leaves_input)
 
             if scene.simplify_geometry_input:
                 from . import utilities
 
+                # update_log doesn't get a chance to print before Blender locks up, so a direct print is necessary
                 sys.stdout.write('Simplifying tree branch geometry. Blender will appear to crash; be patient.\n')
                 sys.stdout.flush()
-
+                
                 # Catch exceptions and print them as strings
                 # This will hopefully reduce random crashes
                 try:
                     utilities.simplify_branch_geometry(context)
+                    update_log('Geometry simplification complete\n\n')
 
                 except Exception:
-                    sys.stdout.write('\n{}\n'.format(traceback.format_exc()))
-                    sys.stdout.write('Geometry simplification failed\n\n')
-                    sys.stdout.flush()
+                    update_log('\n{}\n'.format(traceback.format_exc()))
+                    update_log('Geometry simplification failed\n\n')
+            
+            update_log('Tree generated in {:.6f} seconds\n\n'.format(time.time() - start_time))
 
         # Reduce chance of Blender crashing when generation fails or the user does something ill-advised
         except Exception:
@@ -293,8 +304,7 @@ class TreeGen(bpy.types.Operator):
                     print('Error while parsing input: {} = {}'.format(name, p))
 
             except AttributeError:
-                pass
-                # print('"{}" missing in customizer data, using default'.format(name))
+                pass  # Skip missing attributes, reverting to default
 
         params['base_splits'] = tree_base_splits
 

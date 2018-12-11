@@ -172,8 +172,6 @@ class Tree(object):
 
     def make(self):
         """make the tree"""
-        start_time = time.time()
-        update_log('\n** Generating Tree **\n')
 
         # create parent object
         self.tree_obj = bpy.data.objects.new('Tree', None)
@@ -186,10 +184,6 @@ class Tree(object):
         # Create leaf mesh if needed and enabled
         if self.generate_leaves:
             self.create_leaf_mesh()
-
-        g_time = time.time() - start_time
-
-        update_log('\nTree generated in %f seconds\n\n' % g_time)
 
     def points_for_floor_split(self):
         """Calculate Poissonly distributed points for stem start points"""
