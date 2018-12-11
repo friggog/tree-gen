@@ -63,27 +63,30 @@ class TreeGen(bpy.types.Operator):
 
     # ---
     # Note: an empty-string 'name' parameter removes the default label from inputs
+    
+    _scene = bpy.types.Scene
+    _props = bpy.props
 
     # Item format: (internal value, label, hover-text)
     _gen_methods = (('parametric', 'Parametric', 'Parametric mode'),
                     ('lsystems', 'L-System', 'L-System mode'))
-    bpy.types.Scene.tree_gen_method_input = bpy.props.EnumProperty(name="", items=_gen_methods, default='parametric')
+    _scene.tree_gen_method_input = _props.EnumProperty(name="", items=_gen_methods, default='parametric')
 
     # Drop-downs containing tree options for each generation method
     # These are switched between by TreeGenPanel.draw() based on the state of tree_gen_method_input
     parametric_items, lsystems_items = _get_tree_types()
-    bpy.types.Scene.parametric_tree_type_input = bpy.props.EnumProperty(name="", items=parametric_items)
-    bpy.types.Scene.lsystem_tree_type_input = bpy.props.EnumProperty(name="", items=lsystems_items)
+    _scene.parametric_tree_type_input = _props.EnumProperty(name="", items=parametric_items)
+    _scene.lsystem_tree_type_input = _props.EnumProperty(name="", items=lsystems_items)
 
     # Nothing exciting here. Seed, leaf toggle, and simplify geometry toggle.
-    bpy.types.Scene.seed_input = bpy.props.IntProperty(name="", default=0, min=0, max=9999999)
-    bpy.types.Scene.generate_leaves_input = bpy.props.BoolProperty(name="Generate leaves", default=True)
-    bpy.types.Scene.simplify_geometry_input = bpy.props.BoolProperty(name="Simplify branch geometry", default=False)
+    _scene.seed_input = _props.IntProperty(name="", default=0, min=0, max=9999999)
+    _scene.generate_leaves_input = _props.BoolProperty(name="Generate leaves", default=True)
+    _scene.simplify_geometry_input = _props.BoolProperty(name="Simplify branch geometry", default=False)
 
     # Render inputs; auto-fill path input with user's home directory
-    bpy.types.Scene.render_input = bpy.props.BoolProperty(name="Render", default=False)
+    _scene.render_input = _props.BoolProperty(name="Render", default=False)
     render_output_path = os.path.sep.join((os.path.expanduser('~'), 'treegen_render.png'))
-    bpy.types.Scene.render_output_path_input = bpy.props.StringProperty(name="", default=render_output_path)
+    _scene.render_output_path_input = _props.StringProperty(name="", default=render_output_path)
 
     # ======================
     # Tree customizer inputs
@@ -95,41 +98,71 @@ class TreeGen(bpy.types.Operator):
         ('5', 'Flame', 'Flame'), ('6', 'Inverse Conical', 'Inverse Conical'), ('7', 'Tend Flame', 'Tend Flame'),
         ('8', 'Custom', 'Custom')
     )
-    bpy.types.Scene.tree_shape_input = bpy.props.EnumProperty(name="", items=tree_shape_options, default='0')
+    _scene.tree_shape_input = _props.EnumProperty(name="", items=tree_shape_options, default='0')
 
-    bpy.types.Scene.tree_prune_ratio_input = bpy.props.FloatProperty(name="", default=0, min=0, max=1)
-    bpy.types.Scene.tree_prune_width_input = bpy.props.FloatProperty(name="", default=.5, min=.000001, max=200)
-    bpy.types.Scene.tree_prune_width_peak_input = bpy.props.FloatProperty(name="", default=.5, min=0, max=200)
-    bpy.types.Scene.tree_prune_power_low_input = bpy.props.FloatProperty(name="", default=.5, min=-200,
+    _scene.tree_prune_ratio_input = _props.FloatProperty(name="", default=0, min=0, max=1)
+    _scene.tree_prune_width_input = _props.FloatProperty(name="", default=.5, min=.000001, max=200)
+    _scene.tree_prune_width_peak_input = _props.FloatProperty(name="", default=.5, min=0, max=200)
+    _scene.tree_prune_power_low_input = _props.FloatProperty(name="", default=.5, min=-200,
                                                                          max=200)  # <1 convex, >1 concave
-    bpy.types.Scene.tree_prune_power_high_input = bpy.props.FloatProperty(name="", default=.5, min=-200,
+    _scene.tree_prune_power_high_input = _props.FloatProperty(name="", default=.5, min=-200,
                                                                           max=200)  # <1 convex, >1 concave
 
-    # Overall tree scale and scale variation
-    bpy.types.Scene.tree_g_scale_input = bpy.props.FloatProperty(name="", default=13, min=.000001, max=150)
-    bpy.types.Scene.tree_g_scale_v_input = bpy.props.FloatProperty(name="", default=3, min=0, max=149.99)
-
-    # Level count
-    bpy.types.Scene.tree_levels_input = bpy.props.IntProperty(name="", default=3, min=1, max=6)
-
-    # Ratio and ratio power
-    bpy.types.Scene.tree_ratio_input = bpy.props.FloatProperty(name="", default=.015, min=.000001, max=1)
-    bpy.types.Scene.tree_ratio_power_input = bpy.props.FloatProperty(name="", default=1.2, min=0, max=5)
-
-    # Flare
-    bpy.types.Scene.tree_flare_input = bpy.props.FloatProperty(name="", default=.6, min=0, max=10)
+    # Size of base
+    _scene.tree_base_size_input = _props.FloatVectorProperty(name="", default=(0.3, 0.02, 0.02, 0.02), size=4, min=.001)
 
     # Floor split count
-    bpy.types.Scene.tree_floor_splits_input = bpy.props.IntProperty(name="", default=0, min=0, max=500)
+    _scene.tree_floor_splits_input = _props.IntProperty(name="", default=0, min=0, max=500)
 
     # Base split count
-    bpy.types.Scene.tree_base_splits_randomize_input = bpy.props.BoolProperty(name="Randomize split count",
-                                                                              default=False)
-    bpy.types.Scene.tree_base_splits_limit_input = bpy.props.IntProperty(name="", default=0, min=0, max=10)
+    _scene.tree_base_splits_randomize_input = _props.BoolProperty(name="Randomize split count", default=False)
+    _scene.tree_base_splits_limit_input = _props.IntProperty(name="", default=0, min=0, max=10)
+
+    # Overall tree scale and scale variation
+    _scene.tree_g_scale_input = _props.FloatProperty(name="", default=13, min=.000001, max=150)
+    _scene.tree_g_scale_v_input = _props.FloatProperty(name="", default=3, min=0, max=149.99)
+
+    # Level count
+    _scene.tree_levels_input = _props.IntProperty(name="", default=3, min=1, max=6)
+
+    # Ratio and ratio power
+    _scene.tree_ratio_input = _props.FloatProperty(name="", default=.015, min=.000001, max=1)
+    _scene.tree_ratio_power_input = _props.FloatProperty(name="", default=1.2, min=0, max=5)
+
+    # Flare
+    _scene.tree_flare_input = _props.FloatProperty(name="", default=.6, min=0, max=10)
+
+    # Branch appearance
+    _scene.tree_branches_input = _props.FloatVectorProperty(name="", default=(-0, 50, 30, 10), size=4, min=-0, max=360)
+
+    _scene.tree_length_input = _props.FloatVectorProperty(name="", default=(1, 0.3, 0.6, 0), size=4, min=-0, max=1)
+    _scene.tree_length_v_input = _props.FloatVectorProperty(name="", default=(0, 0, 0, 0), size=4, min=-0, max=1)
+
+    _scene.tree_branch_dist_input = _props.FloatVectorProperty(name="", default=(-0, 0, 0, 0), size=4, min=-0, max=1)
+
+    _scene.tree_taper_input = _props.FloatVectorProperty(name="", default=(1, 1, 1, 1), size=4, min=-0, max=1)
+    _scene.tree_radius_mod_input = _props.FloatVectorProperty(name="", default=(1, 1, 1, 1), size=4, min=0, max=1)
+
+    _scene.tree_bend_v_input = _props.FloatVectorProperty(name="", default=(-0, 50, 0, 0), size=4, min=-0, max=360)
+
+    _scene.tree_curve_res_input = _props.FloatVectorProperty(name="", default=(5, 5, 3, 1), size=4, min=1, max=10)
+    _scene.tree_curve_input = _props.FloatVectorProperty(name="", default=(0, -40, -40, 0), size=4, min=-360, max=360)
+    _scene.tree_curve_v_input = _props.FloatVectorProperty(name="", default=(20, 50, 75, 0), size=4, min=0, max=360)
+    _scene.tree_curve_back_input = _props.FloatVectorProperty(name="", default=(0, 0, 0, 0), size=4, min=0, max=1)
+
+    # "the turning of all or part of an organism in a particular direction in response to an external stimulus"
+    _scene.tree_tropism_input = _props.FloatVectorProperty(name="", default=(0, 0, 0.5), size=3, min=0, max=1)
+
+    _scene.tree_down_angle_input = _props.FloatVectorProperty(name="", default=(-0, 140, 140, 77), size=4, min=-0, max=360)
+    _scene.tree_down_angle_v_input = _props.FloatVectorProperty(name="", default=(-0, -50, 10, 10), size=4, min=-0, max=360)
+
+    _scene.tree_rotate_input = _props.FloatVectorProperty(name="", default=(-0, 140, 140, 77), size=4, min=-0, max=360)
+    _scene.tree_rotate_v_input = _props.FloatVectorProperty(name="", default=(-0, 0, 0, 0), size=4, min=-0)
+
 
     # ----
     # Cumulative count of leaves and blossoms on each of the deepest level of branches
-    bpy.types.Scene.tree_leaf_blos_num_input = bpy.props.IntProperty(name="", default=40, min=0, max=3000)
+    _scene.tree_leaf_blos_num_input = _props.IntProperty(name="", default=40, min=0, max=3000)
 
     # Leaf shape
     leaf_shape_options = (
@@ -137,34 +170,34 @@ class TreeGen(bpy.types.Operator):
         ('5', 'Palmate', 'Palmate'), ('6', 'Spiky Oak', 'Spiky Oak'), ('7', 'Rounded Oak', 'Rounded Oak'),
         ('8', 'Elliptic', 'Elliptic'), ('9', 'Rectangle', 'Rectangle'), ('10', 'Triangle', 'Triangle')
     )
-    bpy.types.Scene.tree_leaf_shape_input = bpy.props.EnumProperty(name="", items=leaf_shape_options, default='1')
+    _scene.tree_leaf_shape_input = _props.EnumProperty(name="", items=leaf_shape_options, default='1')
 
     # Leaf scale
-    bpy.types.Scene.tree_leaf_scale = bpy.props.FloatProperty(name="", default=.17, min=.0001, max=1000)
+    _scene.tree_leaf_scale = _props.FloatProperty(name="", default=.17, min=.0001, max=1000)
 
     # Leaf scale in x-direction
-    bpy.types.Scene.tree_leaf_scale_x = bpy.props.FloatProperty(name="", default=1, min=.0001, max=1000)
+    _scene.tree_leaf_scale_x = _props.FloatProperty(name="", default=1, min=.0001, max=1000)
 
     # Amount of leaf bend towards sunlight
-    bpy.types.Scene.tree_leaf_bend_input = bpy.props.FloatProperty(name="", default=.6, min=0, max=1)
+    _scene.tree_leaf_bend_input = _props.FloatProperty(name="", default=.6, min=0, max=1)
 
     # ----
     # Blossom configuration
-    bpy.types.Scene.tree_generate_blossoms_input = bpy.props.BoolProperty(name="Generate blossoms", default=False)
+    _scene.tree_generate_blossoms_input = _props.BoolProperty(name="Generate blossoms", default=False)
 
     blossom_shape_options = (('1', 'Cherry', 'Cherry'), ('2', 'Orange', 'Orange'), ('3', 'Magnolia', 'Magnolia'))
-    bpy.types.Scene.tree_blossom_shape_input = bpy.props.EnumProperty(name="", items=blossom_shape_options, default='1')
+    _scene.tree_blossom_shape_input = _props.EnumProperty(name="", items=blossom_shape_options, default='1')
 
     # Blossom scale
-    bpy.types.Scene.tree_blossom_scale_input = bpy.props.FloatProperty(name="", default=1, min=.0001, max=1000)
+    _scene.tree_blossom_scale_input = _props.FloatProperty(name="", default=1, min=.0001, max=1000)
 
     # Rate at which blossoms occur relative to leaves
-    bpy.types.Scene.tree_blossom_rate_input = bpy.props.FloatProperty(name="", default=0, min=0, max=1)
+    _scene.tree_blossom_rate_input = _props.FloatProperty(name="", default=0, min=0, max=1)
 
     # Save location for custom tree params
-    bpy.types.Scene.custom_tree_save_overwrite_input = bpy.props.BoolProperty(name="Overwrite if file exists", default=False)
+    _scene.custom_tree_save_overwrite_input = _props.BoolProperty(name="Overwrite if file exists", default=False)
     tree_save_location = os.path.sep.join((_get_addon_path_details()[2], 'parametric', 'tree_params', 'my_custom_tree.py'))
-    bpy.types.Scene.custom_tree_save_location_input = bpy.props.StringProperty(name="", default=tree_save_location)
+    _scene.custom_tree_save_location_input = _props.StringProperty(name="", default=tree_save_location)
 
     # ---
     def execute(self, context):
@@ -234,13 +267,22 @@ class TreeGen(bpy.types.Operator):
                        'curve', 'curve_back', 'curve_v', 'bend_v', 'branch_dist', 'radius_mod', 'leaf_blos_num',
                        'leaf_shape', 'leaf_scale', 'leaf_scale_x', 'leaf_bend', 'blossom_shape', 'blossom_scale',
                        'blossom_rate', 'tropism', 'prune_ratio', 'prune_width', 'prune_width_peak',
-                       'prune_power_low',
-                       'prune_power_high']
+                       'prune_power_low', 'prune_power_high']
 
         params = {}
         for name in param_names:
             try:
-                params[name] = deepcopy(getattr(scene, 'tree_{}_input'.format(name)))
+                p = getattr(scene, 'tree_{}_input'.format(name))
+
+                if str(type(p)) == "<class 'bpy_prop_array'>":
+                    p = list(p)
+
+                if p is not None:
+                    params[name] = deepcopy(p)
+
+                else:
+                    print('Error while parsing input: {} = {}'.format(name, p))
+
             except AttributeError:
                 pass
                 # print('"{}" missing in customizer data, using default'.format(name))
@@ -351,20 +393,30 @@ class TreeGenPanel(bpy.types.Panel):
                 label_row('Prune power (low)', 'tree_prune_power_low_input', False)
                 label_row('Prune power (high)', 'tree_prune_power_high_input')
 
-            label_row('G scale', 'tree_g_scale_input', False)
-            label_row('G scale v', 'tree_g_scale_v_input', True)
+                label_row('Base size', 'tree_base_size_input')
 
-            label_row('Ratio', 'tree_ratio_input', False)
-            label_row('Ratio power', 'tree_ratio_power_input')
+                layout.separator()
+                label_row('', 'tree_base_splits_randomize_input', False, True)
+                if scene.tree_base_splits_randomize_input:
+                    label_row('Base splits limit', 'tree_base_splits_limit_input')
+                else:
+                    label_row('Base splits count', 'tree_floor_splits_input')
 
-            label_row('Flare', 'tree_flare_input')
+                label_row('Floor splits', 'tree_floor_splits_input', False)
 
-            layout.separator()
-            label_row('', 'tree_base_splits_randomize_input', False, True)
-            if scene.tree_base_splits_randomize_input:
-                label_row('Base splits limit', 'tree_base_splits_limit_input')
-            else:
-                label_row('Base splits count', 'tree_floor_splits_input')
+                layout.separator()
+                label_row('G scale', 'tree_g_scale_input', False)
+                label_row('G scale v', 'tree_g_scale_v_input')
+
+                label_row('Ratio', 'tree_ratio_input', False)
+                label_row('Ratio power', 'tree_ratio_power_input')
+
+                label_row('Flare', 'tree_flare_input')
+
+                layout.separator()
+                label_row('', 'tree__input')
+                label_row('', 'tree__input')
+
 
             layout.separator()
             label_row('', 'generate_leaves_input', False, True)
