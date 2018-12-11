@@ -51,6 +51,8 @@ class TreeParam(object):
     def __init__(self, params):
         """initialize parameters from dictionary representation"""
 
+        self.params = {}
+
         filtered = {}
         for k, v in params.items():
             try:
@@ -64,15 +66,17 @@ class TreeParam(object):
                 sys.stdout.flush()
 
         # Copy parameters into instance
-        self.__dict__.update(filtered)
+        self.params.update(filtered)
 
         # Specialized parameter formatting
         for var in ['shape', 'levels', 'floor_splits', 'leaf_shape', 'blossom_shape']:
             if var in filtered:
-                self.__dict__[var] = abs(int(filtered[var]))
+                self.params[var] = abs(int(filtered[var]))
 
         if 'base_splits' in filtered:
-            self.base_splits = int(filtered['base_splits'])
+            self.params['base_splits'] = int(filtered['base_splits'])
+
+        self.__dict__.update(self.params)
 
     def param_to_arr(self):
         """Convert usable parameters to array output for use with scikit-learn"""
