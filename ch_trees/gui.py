@@ -301,7 +301,9 @@ class TreeGenLoadParams(bpy.types.Operator):
 
         scene = context.scene
         for name, value in params.items():
-            if name in ['leaf_shape', 'shape']:
+            if name in ['leaf_shape', 'shape', 'blossom_shape']:
+                if value == 0 and name == 'leaf_shape':
+                    value = 8  # default
                 value = str(value)
             try:
                 setattr(scene, 'tree_{}_input'.format(name), value)
