@@ -3,14 +3,13 @@ import bpy
 import traceback
 import threading
 import random
-# import imp
 import sys
 import os
 import time
 import pprint
 from copy import deepcopy
 
-from ch_trees import parametric   # , lsystems
+from ch_trees import parametric
 from ch_trees.parametric.tree_params import tree_param
 
 
@@ -87,7 +86,7 @@ class TreeGen(bpy.types.Operator):
 
     # Nothing exciting here. Seed, leaf toggle, and simplify geometry toggle.
     _scene.seed_input = _props.IntProperty(name="", default=0, min=0, max=9999999)
-    _scene.generate_leaves_input = _props.BoolProperty(name="Generate leaves", default=True)
+    _scene.generate_leaves_input = _props.BoolProperty(name="Generate leaves/blossom", default=True)
     _scene.simplify_geometry_input = _props.BoolProperty(name="Simplify branch geometry", default=False)
 
     # Render inputs; auto-fill path input with user's home directory
@@ -191,13 +190,13 @@ class TreeGen(bpy.types.Operator):
 
     # ----
     # Blossom configuration
-    _scene.tree_generate_blossoms_input = _props.BoolProperty(name="Generate blossoms", default=False)
+    # _scene.tree_generate_blossoms_input = _props.BoolProperty(name="Generate blossoms", default=False)
 
     blossom_shape_options = (('1', 'Cherry', 'Cherry'), ('2', 'Orange', 'Orange'), ('3', 'Magnolia', 'Magnolia'))
     _scene.tree_blossom_shape_input = _props.EnumProperty(name="", items=blossom_shape_options, default='1')
 
     # Blossom scale
-    _scene.tree_blossom_scale_input = _props.FloatProperty(name="", default=1, min=.0001, max=1000)
+    _scene.tree_blossom_scale_input = _props.FloatProperty(name="", default=0.1, min=.0001, max=1)
 
     # Rate at which blossoms occur relative to leaves
     _scene.tree_blossom_rate_input = _props.FloatProperty(name="", default=0, min=0, max=1)
@@ -336,8 +335,6 @@ class TreeGenSaveFile(bpy.types.Operator):
         parametric_items, _ = _get_tree_types()
         bpy.types.Scene.parametric_tree_type_input = bpy.props.EnumProperty(name="", items=parametric_items)
 
-        # context.scene.parametric_tree_type_input = 'custom'
-
         return {'FINISHED'}
 
 
@@ -364,8 +361,6 @@ class TreeGenLoadParams(bpy.types.Operator):
             except TypeError as ex:
                 exception = str(ex).replace('TypeError: bpy_struct: item.attr = val: ', '')
                 print('TreeGen :: Error while loading preset "{}": {}'.format(name, exception))
-
-        # context.scene.parametric_tree_type_input = 'custom'
 
         return {'FINISHED'}
 
@@ -406,22 +401,21 @@ class TreeGenCustomisePanel(bpy.types.Panel):
         label_row('', 'generate_leaves_input', True, container=box)
         if scene.generate_leaves_input:
             label_row('Leaf shape', 'tree_leaf_shape_input', dropdown=True, container=box)
-            box.separator()
+            label_row('Leaf Count', 'tree_leaf_blos_num_input', container=box)
             label_row('Length', 'tree_leaf_scale_input', container=box)
             label_row('Width', 'tree_leaf_scale_x_input', container=box)
             label_row('Bend', 'tree_leaf_bend_input', container=box)
-        box.row()
+        # box.row()
 
-        layout.separator()
-        box = layout.box()
-        box.row()
-        label_row('', 'tree_generate_blossoms_input', True, container=box)
-        if scene.tree_generate_blossoms_input:
-            box.separator()
-            label_row('Blossom shape', 'tree_blossom_shape_input', True, dropdown=True, container=box)
-            label_row('Blossom count', 'tree_leaf_blos_num_input', container=box)
-            label_row('Blossom rate', 'tree_blossom_rate_input', container=box)
-            label_row('Blossom scale', 'tree_blossom_scale_input', container=box)
+        # layout.separator()
+        # box = layout.box()
+        # box.row()
+        # label_row('', 'tree_generate_blossoms_input', True, container=box)
+        # if scene.tree_generate_blossoms_input:
+        box.separator()
+        label_row('Blossom shape', 'tree_blossom_shape_input', True, dropdown=True, container=box)
+        label_row('Blossom rate', 'tree_blossom_rate_input', container=box)
+        label_row('Blossom scale', 'tree_blossom_scale_input', container=box)
         box.row()
 
         layout.separator()
