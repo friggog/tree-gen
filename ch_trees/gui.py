@@ -15,8 +15,6 @@ from ch_trees.parametric.tree_params import tree_param
 
 update_log = parametric.gen.update_log
 
-# TODO can remove all Lsystem stuff
-
 
 def _get_addon_path_details():
     addon_path_parts = __file__.split(os.path.sep)[:-1]
@@ -29,30 +27,17 @@ def _get_addon_path_details():
 def _get_tree_types(self=None, context=None):
     # Scan the the ch_trees addon folder for parameters and definitions,
     # then return two EnumProperty objects for use as the drop-down tree selector
-    # (one for parametric, one for L-system)
-
     addon_path_parts, addon_name, addon_path = _get_addon_path_details()
-
-    module_path_parts = [['parametric', 'tree_params'], ['lsystems', 'sys_defs']]
-
+    module_parts = ['parametric', 'tree_params']
     # Build the drop-down menus
-    enum_options = []
-    for modparts in module_path_parts:
-        # TODO remove Tree Param from this list
-        path = os.path.join(addon_path, *modparts)
-        files = [f.split('.')[0] for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]
-
-        # ex: ['ch_trees.parametric.tree_params.quaking_aspen', ...]
-        modules = ['{}.{}.{}'.format(addon_name, '.'.join(modparts), f) for f in files]
-
-        # ex: 'Quaking Aspen'
-        titles = [f.replace('_', ' ').title() for f in files]
-
-        enum_options.append([(module, title, title) for module, title in zip(modules, titles)])
-
-    enum_options[0] = [tuple(option) for option in enum_options[0]]
-    enum_options[1] = [tuple(option) for option in enum_options[1]]
-
+    path = os.path.join(addon_path, *module_parts)
+    files = [f.split('.')[0] for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]
+    files.remove('tree_param')
+    # ex: ['ch_trees.parametric.tree_params.quaking_aspen', ...]
+    modules = ['{}.{}.{}'.format(addon_name, '.'.join(module_parts), f) for f in files]
+    # ex: 'Quaking Aspen'
+    titles = [f.replace('_', ' ').title() for f in files]
+    enum_options = [(module, title, title) for module, title in zip(modules, titles)]
     return enum_options
 
 
@@ -72,7 +57,7 @@ class TreeGen(bpy.types.Operator):
 
     # Drop-downs containing tree options for each generation method
     # These are switched between by TreeGenPanel.draw() based on the state of tree_gen_method_input
-    parametric_items, lsystems_items = _get_tree_types()
+    parametric_items = _get_tree_types()
 
     # Nothing exciting here. Seed, leaf toggle, and simplify geometry toggle.
     _scene.seed_input = _props.IntProperty(name="", default=0, min=0, max=9999999)
@@ -322,7 +307,7 @@ class TreeGenSaveFile(bpy.types.Operator):
         with open(save_location, 'w') as output_file:
             print('params = ' + pprint.pformat(params), file=output_file)
 
-        parametric_items, _ = _get_tree_types()
+        parametric_items = _get_tree_types()
         bpy.types.Scene.parametric_tree_type_input = bpy.props.EnumProperty(name="", items=parametric_items)
 
         return {'FINISHED'}
