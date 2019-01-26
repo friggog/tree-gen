@@ -2,7 +2,7 @@ import bpy
 
 import traceback
 import threading
-import random
+# import random
 import sys
 import os
 import time
@@ -50,9 +50,6 @@ def _get_tree_types(self=None, context=None):
 
         enum_options.append([(module, title, title) for module, title in zip(modules, titles)])
 
-    # Add 'Custom' menu option to parametric mode
-    # enum_options[0].append(('custom', 'Custom', 'Custom parameters'))
-
     enum_options[0] = [tuple(option) for option in enum_options[0]]
     enum_options[1] = [tuple(option) for option in enum_options[1]]
 
@@ -73,16 +70,9 @@ class TreeGen(bpy.types.Operator):
     _scene = bpy.types.Scene
     _props = bpy.props
 
-    # Item format: (internal value, label, hover-text)
-    # _gen_methods = (('parametric', 'Parametric', 'Parametric mode'),
-    #                 ('lsystems', 'L-System', 'L-System mode'))
-    # _scene.tree_gen_method_input = _props.EnumProperty(name="", items=_gen_methods, default='parametric')
-
     # Drop-downs containing tree options for each generation method
     # These are switched between by TreeGenPanel.draw() based on the state of tree_gen_method_input
     parametric_items, lsystems_items = _get_tree_types()
-    # _scene.parametric_tree_type_input = _props.EnumProperty(name="", items=parametric_items)
-    # _scene.lsystem_tree_type_input = _props.EnumProperty(name="", items=lsystems_items)
 
     # Nothing exciting here. Seed, leaf toggle, and simplify geometry toggle.
     _scene.seed_input = _props.IntProperty(name="", default=0, min=0, max=9999999)
@@ -118,9 +108,9 @@ class TreeGen(bpy.types.Operator):
     _scene.tree_floor_splits_input = _props.IntProperty(name="", default=0, min=0, max=500)
 
     # Base split count
-    _scene.tree_base_splits_randomize_input = _props.BoolProperty(name="Randomize base split count", default=False)
+    # _scene.tree_base_splits_randomize_input = _props.BoolProperty(name="Randomize base split count", default=False)
     _scene.tree_base_splits_input = _props.IntProperty(name="", default=0, min=-5, max=5)
-    _scene.tree_base_splits_limit_input = _props.IntProperty(name="", default=0, min=0, max=10)
+    # _scene.tree_base_splits_limit_input = _props.IntProperty(name="", default=0, min=0, max=10)
 
     # Overall tree scale and scale variation
     _scene.tree_g_scale_input = _props.FloatProperty(name="", default=13, min=.000001, max=150)
@@ -144,14 +134,14 @@ class TreeGen(bpy.types.Operator):
 
     _scene.tree_branch_dist_input = _props.FloatVectorProperty(name="", default=(0, 0, 0, 0), size=4, min=0, max=1)
 
-    _scene.tree_taper_input = _props.FloatVectorProperty(name="", default=(1, 1, 1, 1), size=4, min=-0, max=1)
+    _scene.tree_taper_input = _props.FloatVectorProperty(name="", default=(1, 1, 1, 1), size=4, min=-0, max=3)
     _scene.tree_radius_mod_input = _props.FloatVectorProperty(name="", default=(1, 1, 1, 1), size=4, min=0, max=1)
 
     _scene.tree_bend_v_input = _props.FloatVectorProperty(name="", default=(0, 50, 0, 0), size=4, min=0, max=360)
 
     _scene.tree_curve_res_input = _props.FloatVectorProperty(name="", default=(5, 5, 3, 1), size=4, min=1, max=10)
     _scene.tree_curve_input = _props.FloatVectorProperty(name="", default=(0, -40, -40, 0), size=4, min=-360, max=360)
-    _scene.tree_curve_v_input = _props.FloatVectorProperty(name="", default=(20, 50, 75, 0), size=4, min=0, max=360)
+    _scene.tree_curve_v_input = _props.FloatVectorProperty(name="", default=(20, 50, 75, 0), size=4, min=-360, max=360)
     _scene.tree_curve_back_input = _props.FloatVectorProperty(name="", default=(0, 0, 0, 0), size=4, min=0, max=1)
 
     _scene.tree_seg_splits_input = _props.FloatVectorProperty(name="", default=(1.5, 1.5, 0, 0), size=4, min=0, max=2)
@@ -162,14 +152,14 @@ class TreeGen(bpy.types.Operator):
     _scene.tree_tropism_input = _props.FloatVectorProperty(name="", default=(0, 0, 0.5), size=3, min=-10, max=10)
 
     _scene.tree_down_angle_input = _props.FloatVectorProperty(name="", default=(0, 140, 140, 77), size=4, min=0, max=360)
-    _scene.tree_down_angle_v_input = _props.FloatVectorProperty(name="", default=(0, -50, 10, 10), size=4, min=0, max=360)
+    _scene.tree_down_angle_v_input = _props.FloatVectorProperty(name="", default=(0, -50, 10, 10), size=4, min=-360, max=360)
 
-    _scene.tree_rotate_input = _props.FloatVectorProperty(name="", default=(0, 140, 140, 77), size=4, min=0, max=360)
+    _scene.tree_rotate_input = _props.FloatVectorProperty(name="", default=(0, 140, 140, 77), size=4, min=-360, max=360)
     _scene.tree_rotate_v_input = _props.FloatVectorProperty(name="", default=(0, 0, 0, 0), size=4, min=0)
 
     # ----
     # Cumulative count of leaves and blossoms on each of the deepest level of branches
-    _scene.tree_leaf_blos_num_input = _props.IntProperty(name="", default=40, min=0, max=3000)
+    _scene.tree_leaf_blos_num_input = _props.IntProperty(name="", default=40, min=-1000, max=3000)
 
     # Leaf shape
     leaf_shape_options = (
@@ -276,9 +266,9 @@ class TreeGen(bpy.types.Operator):
     def get_params_from_customizer(context):
         scene = context.scene
 
-        tree_base_splits = scene.tree_base_splits_limit_input
-        if scene.tree_base_splits_randomize_input:
-            tree_base_splits = random.randrange(0, tree_base_splits)
+        # tree_base_splits = scene.tree_base_splits_limit_input
+        # if scene.tree_base_splits_randomize_input:
+        #     tree_base_splits = random.randrange(0, tree_base_splits)
 
         param_names = ['shape', 'g_scale', 'g_scale_v', 'levels', 'ratio', 'flare', 'ratio_power', 'floor_splits',
                        'base_size', 'down_angle', 'down_angle_v', 'rotate', 'rotate_v', 'branches',
@@ -305,7 +295,7 @@ class TreeGen(bpy.types.Operator):
             except AttributeError:
                 pass  # Skip missing attributes, reverting to default
 
-        params['base_splits'] = tree_base_splits
+        # params['base_splits'] = tree_base_splits
 
         return params
 
@@ -405,42 +395,26 @@ class TreeGenCustomisePanel(bpy.types.Panel):
             label_row('Length', 'tree_leaf_scale_input', container=box)
             label_row('Width', 'tree_leaf_scale_x_input', container=box)
             label_row('Bend', 'tree_leaf_bend_input', container=box)
-        # box.row()
-
-        # layout.separator()
-        # box = layout.box()
-        # box.row()
-        # label_row('', 'tree_generate_blossoms_input', True, container=box)
-        # if scene.tree_generate_blossoms_input:
-        box.separator()
-        label_row('Blossom shape', 'tree_blossom_shape_input', True, dropdown=True, container=box)
-        label_row('Blossom rate', 'tree_blossom_rate_input', container=box)
-        label_row('Blossom scale', 'tree_blossom_scale_input', container=box)
+            box.separator()
+            label_row('Blossom shape', 'tree_blossom_shape_input', True, dropdown=True, container=box)
+            label_row('Blossom rate', 'tree_blossom_rate_input', container=box)
+            label_row('Blossom scale', 'tree_blossom_scale_input', container=box)
         box.row()
 
         layout.separator()
         box = layout.box()
         label_row('Tree shape', 'tree_shape_input', dropdown=True, container=box)
         box.separator()
-
         label_row('Level count', 'tree_levels_input', container=box)
         label_row('Trunk count', 'tree_floor_splits_input', container=box)
-
         box.separator()
         label_row('Prune ratio', 'tree_prune_ratio_input', container=box)
         label_row('Prune width', 'tree_prune_width_input', container=box)
         label_row('Prune width peak', 'tree_prune_width_peak_input', container=box)
         label_row('Prune power (low)', 'tree_prune_power_low_input', container=box)
         label_row('Prune power (high)', 'tree_prune_power_high_input', container=box)
-
         box.separator()
-
-        box.separator()
-        label_row('', 'tree_base_splits_randomize_input', True, container=box)
-        if scene.tree_base_splits_randomize_input:
-            label_row('Base splits limit', 'tree_base_splits_limit_input', container=box)
-        else:
-            label_row('Base splits', 'tree_base_splits_input', container=box)
+        label_row('Base splits', 'tree_base_splits_input', container=box)
         box.row()
 
         layout.separator()
@@ -448,14 +422,11 @@ class TreeGenCustomisePanel(bpy.types.Panel):
         box.row()
         label_row('Height scale', 'tree_g_scale_input', container=box)
         label_row('Height scale variation', 'tree_g_scale_v_input', container=box)
-
         box.separator()
         label_row('Tropism', 'tree_tropism_input', container=box)
-
         box.separator()
         label_row('Ratio', 'tree_ratio_input', container=box)
         label_row('Ratio power', 'tree_ratio_power_input', container=box)
-
         box.separator()
         label_row('Flare', 'tree_flare_input', container=box)
         box.row()
@@ -470,25 +441,20 @@ class TreeGenCustomisePanel(bpy.types.Panel):
         label_row('Distance', 'tree_branch_dist_input', container=box)
         label_row('Taper', 'tree_taper_input', container=box)
         label_row('Radius modifier', 'tree_radius_mod_input', container=box)
-
         box.separator()
         label_row('Curve resolution', 'tree_curve_res_input', container=box)
         label_row('Curve', 'tree_curve_input', container=box)
         label_row('Curve variation', 'tree_curve_v_input', container=box)
         label_row('Curve back', 'tree_curve_back_input', container=box)
-
         box.separator()
         label_row('Segment splits', 'tree_seg_splits_input', container=box)
         label_row('Split angle', 'tree_split_angle_input', container=box)
         label_row('Split angle variation', 'tree_split_angle_v_input', container=box)
-
         box.separator()
         label_row('Bend variation', 'tree_bend_v_input', container=box)
-
         box.separator()
         label_row('Down angle', 'tree_down_angle_input', container=box)
         label_row('Down angle variation', 'tree_down_angle_v_input', container=box)
-
         box.separator()
         label_row('Rotation', 'tree_rotate_input', False, container=box)
         label_row('Rotation variation', 'tree_rotate_v_input', container=box)
