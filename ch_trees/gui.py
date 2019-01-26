@@ -78,7 +78,7 @@ class TreeGen(bpy.types.Operator):
         ('3', 'Cylindrical', 'Cylindrical'), ('4', 'Tapered Cylindrical', 'Tapered Cylindrical'),
         ('5', 'Flame', 'Flame'), ('6', 'Inverse Conical', 'Inverse Conical'), ('7', 'Tend Flame', 'Tend Flame')
     )
-    _scene.tree_shape_input = _props.EnumProperty(name="", items=tree_shape_options, default='0')
+    _scene.tree_shape_input = _props.EnumProperty(name="", items=tree_shape_options, default='7')
 
     _scene.tree_prune_ratio_input = _props.FloatProperty(name="", default=0, min=0, max=1)
     _scene.tree_prune_width_input = _props.FloatProperty(name="", default=.5, min=.000001, max=200)
@@ -129,14 +129,14 @@ class TreeGen(bpy.types.Operator):
     _scene.tree_curve_v_input = _props.FloatVectorProperty(name="", default=(20, 50, 75, 0), size=4, min=-360, max=360)
     _scene.tree_curve_back_input = _props.FloatVectorProperty(name="", default=(0, 0, 0, 0), size=4, min=0, max=1)
 
-    _scene.tree_seg_splits_input = _props.FloatVectorProperty(name="", default=(1.5, 1.5, 0, 0), size=4, min=0, max=2)
-    _scene.tree_split_angle_input = _props.FloatVectorProperty(name="", default=(50, 50, 0, 0), size=4, min=0, max=360)
-    _scene.tree_split_angle_v_input = _props.FloatVectorProperty(name="", default=(5, 5, 0, 0), size=4, min=0, max=360)
+    _scene.tree_seg_splits_input = _props.FloatVectorProperty(name="", default=(0, 0, 0, 0), size=4, min=0, max=2)
+    _scene.tree_split_angle_input = _props.FloatVectorProperty(name="", default=(40, 0, 0, 0), size=4, min=0, max=360)
+    _scene.tree_split_angle_v_input = _props.FloatVectorProperty(name="", default=(5, 0, 0, 0), size=4, min=0, max=360)
 
     # "the turning of all or part of an organism in a particular direction in response to an external stimulus"
     _scene.tree_tropism_input = _props.FloatVectorProperty(name="", default=(0, 0, 0.5), size=3, min=-10, max=10)
 
-    _scene.tree_down_angle_input = _props.FloatVectorProperty(name="", default=(0, 140, 140, 77), size=4, min=0, max=360)
+    _scene.tree_down_angle_input = _props.FloatVectorProperty(name="", default=(0, 60, 45, 45), size=4, min=0, max=360)
     _scene.tree_down_angle_v_input = _props.FloatVectorProperty(name="", default=(0, -50, 10, 10), size=4, min=-360, max=360)
 
     _scene.tree_rotate_input = _props.FloatVectorProperty(name="", default=(0, 140, 140, 77), size=4, min=-360, max=360)
@@ -152,7 +152,7 @@ class TreeGen(bpy.types.Operator):
         ('5', 'Palmate', 'Palmate'), ('6', 'Spiky Oak', 'Spiky Oak'), ('7', 'Rounded Oak', 'Rounded Oak'),
         ('8', 'Elliptic', 'Elliptic'), ('9', 'Rectangle', 'Rectangle'), ('10', 'Triangle', 'Triangle')
     )
-    _scene.tree_leaf_shape_input = _props.EnumProperty(name="", items=leaf_shape_options, default='1')
+    _scene.tree_leaf_shape_input = _props.EnumProperty(name="", items=leaf_shape_options, default='3')
 
     # Leaf scale
     _scene.tree_leaf_scale_input = _props.FloatProperty(name="", default=.17, min=.0001, max=1000)
@@ -182,15 +182,13 @@ class TreeGen(bpy.types.Operator):
     _scene.custom_tree_save_location_input = _props.StringProperty(name="", default=tree_save_location)
 
     # Load custom params
-    _scene.custom_tree_load_params_input = _props.EnumProperty(name="", items=parametric_items)
+    _scene.custom_tree_load_params_input = _props.EnumProperty(name="", default="ch_trees.parametric.tree_params.quaking_aspen", items=parametric_items)
 
     # ---
     def execute(self, context):
         # "Generate Tree" button callback
-
         params = TreeGen.get_params_from_customizer(context)
         threading.Thread(daemon=True, target=self._construct, kwargs={'context': context, 'params': params}).start()
-
         return {'FINISHED'}
 
     # ---
