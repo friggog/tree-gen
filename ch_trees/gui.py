@@ -261,7 +261,7 @@ class TreeGen(bpy.types.Operator):
                        'curve', 'curve_back', 'curve_v', 'bend_v', 'branch_dist', 'radius_mod', 'leaf_blos_num',
                        'leaf_shape', 'leaf_scale', 'leaf_scale_x', 'leaf_bend', 'blossom_shape', 'blossom_scale',
                        'blossom_rate', 'tropism', 'prune_ratio', 'prune_width', 'prune_width_peak',
-                       'prune_power_low', 'prune_power_high']
+                       'prune_power_low', 'prune_power_high', 'base_splits']
 
         params = {}
         for name in param_names:
