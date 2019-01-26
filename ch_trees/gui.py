@@ -251,10 +251,6 @@ class TreeGen(bpy.types.Operator):
     def get_params_from_customizer(context):
         scene = context.scene
 
-        # tree_base_splits = scene.tree_base_splits_limit_input
-        # if scene.tree_base_splits_randomize_input:
-        #     tree_base_splits = random.randrange(0, tree_base_splits)
-
         param_names = ['shape', 'g_scale', 'g_scale_v', 'levels', 'ratio', 'flare', 'ratio_power', 'floor_splits',
                        'base_size', 'down_angle', 'down_angle_v', 'rotate', 'rotate_v', 'branches',
                        'length', 'length_v', 'taper', 'seg_splits', 'split_angle', 'split_angle_v', 'curve_res',
@@ -267,20 +263,14 @@ class TreeGen(bpy.types.Operator):
         for name in param_names:
             try:
                 p = getattr(scene, 'tree_{}_input'.format(name))
-
                 if str(type(p)) == "<class 'bpy_prop_array'>":
                     p = list(p)
-
                 if p is not None:
                     params[name] = deepcopy(p)
-
                 else:
                     print('Error while parsing input: {} = {}'.format(name, p))
-
             except AttributeError:
                 pass  # Skip missing attributes, reverting to default
-
-        # params['base_splits'] = tree_base_splits
 
         return params
 
