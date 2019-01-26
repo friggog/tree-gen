@@ -197,33 +197,15 @@ class TreeGen(bpy.types.Operator):
     def _construct(self, context, params):
         # The generator's main thread.
         # Handles conditional logic for generation method selection.
-
         scene = context.scene
-        # mod_name = scene.parametric_tree_type_input if scene.tree_gen_method_input == 'parametric' else scene.lsystem_tree_type_input
-        # mod_name = 'parametric'
-
         update_log('\n** Generating Tree **\n')
         try:
-            # if mod_name.startswith('custom'):
             start_time = time.time()
             parametric.gen.construct(params, scene.seed_input, scene.render_input, scene.render_output_path_input,
                                      scene.generate_leaves_input)
 
-            # elif mod_name.startswith('ch_trees.parametric'):
-            #     mod = __import__(mod_name, fromlist=[''])
-            #     imp.reload(mod)
-
-            #     start_time = time.time()
-            #     parametric.gen.construct(mod.params, scene.seed_input, scene.render_input, scene.render_output_path_input,
-            #                              scene.generate_leaves_input)
-
-            # else:
-            #     start_time = time.time()
-            #     lsystems.gen.construct(mod_name, scene.generate_leaves_input)
-
             if scene.simplify_geometry_input:
                 from . import utilities
-
                 # update_log doesn't get a chance to print before Blender locks up, so a direct print is necessary
                 sys.stdout.write('Simplifying tree branch geometry. Blender will appear to crash; be patient.\n')
                 sys.stdout.flush()
@@ -378,6 +360,7 @@ class TreeGenCustomisePanel(bpy.types.Panel):
 
         layout.separator()
         box = layout.box()
+        box.row()
         label_row('Tree shape', 'tree_shape_input', dropdown=True, container=box)
         box.separator()
         label_row('Level count', 'tree_levels_input', container=box)
@@ -389,12 +372,9 @@ class TreeGenCustomisePanel(bpy.types.Panel):
         label_row('Prune power (low)', 'tree_prune_power_low_input', container=box)
         label_row('Prune power (high)', 'tree_prune_power_high_input', container=box)
         box.separator()
-        label_row('Base splits', 'tree_base_splits_input', container=box)
-        box.row()
-
-        layout.separator()
-        box = layout.box()
-        box.row()
+        label_row('Trunk splits', 'tree_base_splits_input', container=box)
+        label_row('Trunk Flare', 'tree_flare_input', container=box)
+        box.separator()
         label_row('Height scale', 'tree_g_scale_input', container=box)
         label_row('Height scale variation', 'tree_g_scale_v_input', container=box)
         box.separator()
@@ -402,8 +382,6 @@ class TreeGenCustomisePanel(bpy.types.Panel):
         box.separator()
         label_row('Ratio', 'tree_ratio_input', container=box)
         label_row('Ratio power', 'tree_ratio_power_input', container=box)
-        box.separator()
-        label_row('Flare', 'tree_flare_input', container=box)
         box.row()
 
         layout.separator()
@@ -485,20 +463,17 @@ class TreeGenPanel(bpy.types.Panel):
         box.row()
 
         layout.separator()
-        label_row('', 'simplify_geometry_input', True)
-
-        layout.separator()
         box = layout.box()
         box.row()
         label_row('', 'render_input', True, container=box)
         if scene.render_input:
             label_row('Filepath:', 'render_output_path_input', container=box)
+        box.separator()
+        label_row('', 'simplify_geometry_input', True, container=box)
+        box.separator()
+        label_row('Seed', 'seed_input', container=box)
         box.row()
 
-        layout.separator()
-        label_row('Seed', 'seed_input')
-
-        layout.separator()
         layout.separator()
         layout.operator(TreeGen.bl_idname)
         layout.separator()
