@@ -2,7 +2,6 @@ import bpy
 
 import traceback
 import threading
-# import random
 import sys
 import os
 import time
@@ -20,7 +19,6 @@ def _get_addon_path_details():
     addon_path_parts = __file__.split(os.path.sep)[:-1]
     addon_name = addon_path_parts[-1]
     addon_path = os.path.sep.join(addon_path_parts)
-
     return addon_path_parts, addon_name, addon_path
 
 
@@ -60,7 +58,7 @@ class TreeGen(bpy.types.Operator):
     parametric_items = _get_tree_types()
 
     # Nothing exciting here. Seed, leaf toggle, and simplify geometry toggle.
-    _scene.seed_input = _props.IntProperty(name="", default=0, min=0, max=9999999)
+    _scene.seed_input = _props.IntProperty(name="", default=1, min=0, max=9999999)
     _scene.generate_leaves_input = _props.BoolProperty(name="Generate leaves/blossom", default=True)
     _scene.simplify_geometry_input = _props.BoolProperty(name="Simplify branch geometry", default=False)
 
@@ -89,9 +87,6 @@ class TreeGen(bpy.types.Operator):
     # Size of base
     _scene.tree_base_size_input = _props.FloatVectorProperty(name="", default=(0.3, 0.02, 0.02, 0.02), size=4, min=.001)
 
-    # Floor split count
-    _scene.tree_floor_splits_input = _props.IntProperty(name="", default=0, min=0, max=500)
-
     # Base split count
     # _scene.tree_base_splits_randomize_input = _props.BoolProperty(name="Randomize base split count", default=False)
     _scene.tree_base_splits_input = _props.IntProperty(name="", default=0, min=-5, max=5)
@@ -112,7 +107,7 @@ class TreeGen(bpy.types.Operator):
     _scene.tree_flare_input = _props.FloatProperty(name="", default=.6, min=0, max=10)
 
     # Branch appearance
-    _scene.tree_branches_input = _props.FloatVectorProperty(name="", default=(0, 50, 30, 10), size=4, min=0, max=360)
+    _scene.tree_branches_input = _props.IntVectorProperty(name="", default=(1, 50, 30, 1), size=4, min=1, max=500)
 
     _scene.tree_length_input = _props.FloatVectorProperty(name="", default=(1, 0.3, 0.6, 0), size=4, min=0, max=1)
     _scene.tree_length_v_input = _props.FloatVectorProperty(name="", default=(0, 0, 0, 0), size=4, min=-0, max=1)
@@ -231,7 +226,7 @@ class TreeGen(bpy.types.Operator):
     def get_params_from_customizer(context):
         scene = context.scene
 
-        param_names = ['shape', 'g_scale', 'g_scale_v', 'levels', 'ratio', 'flare', 'ratio_power', 'floor_splits',
+        param_names = ['shape', 'g_scale', 'g_scale_v', 'levels', 'ratio', 'flare', 'ratio_power',
                        'base_size', 'down_angle', 'down_angle_v', 'rotate', 'rotate_v', 'branches',
                        'length', 'length_v', 'taper', 'seg_splits', 'split_angle', 'split_angle_v', 'curve_res',
                        'curve', 'curve_back', 'curve_v', 'bend_v', 'branch_dist', 'radius_mod', 'leaf_blos_num',
@@ -364,7 +359,6 @@ class TreeGenCustomisePanel(bpy.types.Panel):
         label_row('Tree shape', 'tree_shape_input', dropdown=True, container=box)
         box.separator()
         label_row('Level count', 'tree_levels_input', container=box)
-        label_row('Trunk count', 'tree_floor_splits_input', container=box)
         box.separator()
         label_row('Prune ratio', 'tree_prune_ratio_input', container=box)
         label_row('Prune width', 'tree_prune_width_input', container=box)

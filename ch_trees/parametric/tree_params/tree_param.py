@@ -11,14 +11,13 @@ defaults = {
     'ratio': 0.015,
     'ratio_power': 1.2,
     'flare': 0.6,
-    'floor_splits': 0,
     'base_splits': 0,
     'base_size': [0.3, 0.02, 0.02, 0.02],
     'down_angle': [-0, 60, 45, 45],
     'down_angle_v': [-0, -50, 10, 10],
     'rotate': [-0, 140, 140, 77],
     'rotate_v': [-0, 0, 0, 0],
-    'branches': [-0, 50, 30, 10],
+    'branches': [1, 50, 30, 10],
     'length': [1, 0.3, 0.6, 0],
     'length_v': [0, 0, 0, 0],
     'taper': [1, 1, 1, 1],
@@ -69,10 +68,12 @@ class TreeParam(object):
         self.params.update(filtered)
 
         # Specialized parameter formatting
-        for var in ['shape', 'levels', 'floor_splits', 'leaf_shape', 'blossom_shape']:
+        for var in ['shape', 'levels', 'leaf_shape', 'blossom_shape']:
             if var in filtered:
                 self.params[var] = abs(int(filtered[var]))
         if 'base_splits' in filtered:
             self.params['base_splits'] = int(filtered['base_splits'])
+        if 'branches' in filtered:
+            self.params['branches'] = [int(filtered['branches'][i]) for i in range(len(filtered['branches']))]
 
         self.__dict__.update(self.params)

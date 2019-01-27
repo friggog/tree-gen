@@ -194,11 +194,11 @@ class Tree(object):
         rad = 2.5 * self.calc_stem_radius(stem)
 
         # generate points
-        for _ in range(self.param.floor_splits + 1):
+        for _ in range(self.param.branches[0]):
             point_ok = False
             while not point_ok:
                 # distance from center proportional for number of splits, tree scale and stem radius
-                dis = sqrt(random_random() * self.param.floor_splits / 2.5 * self.param.g_scale * self.param.ratio)
+                dis = sqrt(random_random() * self.param.branches[0] / 2.5 * self.param.g_scale * self.param.ratio)
                 # angle random in circle
                 theta = rand_in_range(0, 2 * pi)
                 pos = Vector([dis * cos(theta), dis * sin(theta), 0])
@@ -231,16 +231,17 @@ class Tree(object):
         branches_obj.parent = self.tree_obj
 
         # actually make the branches
-        points = self.points_for_floor_split()
+        if self.param.branches[0] > 0:
+            points = self.points_for_floor_split()
 
-        for ind in range(self.param.floor_splits + 1):
+        for ind in range(self.param.branches[0]):
             self.tree_scale = self.param.g_scale + random_uniform(-1, 1) * self.param.g_scale_v
             turtle = CHTurtle()
             turtle.pos = Vector([0, 0, 0])
             turtle.dir = Vector([0, 0, 1])
             turtle.right = Vector([1, 0, 0])
 
-            if self.param.floor_splits > 0:
+            if self.param.branches[0] > 1:
                 # position randomly at base and rotate to face out
                 point = points[ind]
                 turtle.roll_right(degrees(point[1] - 90))
@@ -550,7 +551,6 @@ class Tree(object):
                             num_of_splits = int(random_random() * (abs(self.param.base_splits) + 0.5))
                         else:
                             num_of_splits = int(self.param.base_splits)
-
                     elif seg_splits > 0 and seg_ind < curve_res and (depth > 0 or seg_ind > base_seg_ind):
                         # otherwise get number of splits from seg_splits and use floyd-steinberg to
                         # fix non-integer values only clone with probability clone_prob
