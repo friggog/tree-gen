@@ -5,7 +5,6 @@ bl_info = {
     "author": "Charlie Hewitt and Luke Pflibsen-Jones",
     "version": (0, 0, 1),
     "wiki_url": "",
-    "version": (0, 0, 1),
 }
 
 
