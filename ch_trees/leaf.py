@@ -59,7 +59,7 @@ class Leaf(object):
         if bend > 0:
             bend_trf_1, bend_trf_2 = self.calc_bend_trf(bend)
         else:
-            bend_trf_1 = bend_trf_2 = None
+            bend_trf_1 = None
 
         vertices = []
         for vertex in base_shape[0]:
@@ -71,7 +71,7 @@ class Leaf(object):
             # apply bend if needed
             if bend > 0:
                 n_vertex.rotate(bend_trf_1)
-                n_vertex.rotate(bend_trf_2)
+                # n_vertex.rotate(bend_trf_2)
 
             # move to right position
             n_vertex += self.position
@@ -92,6 +92,10 @@ class Leaf(object):
         theta_pos = atan2(self.position.y, self.position.x)
         theta_bend = theta_pos - atan2(normal.y, normal.x)
         bend_trf_1 = Quaternion(Vector([0, 0, 1]), theta_bend * bend)
+
+        # i think this is what the paper says but the second transform just looks stupid
+        # so we just ignore it above
+
         self.direction.rotate(bend_trf_1)
         self.right.rotate(bend_trf_1)
         normal = self.direction.cross(self.right)
