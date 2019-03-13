@@ -3,7 +3,9 @@ Blender plugin produced as part of my undergraduate dissertation: [Procedural ge
 
 ![Tree Samples](http://chewitt.me/Folio/Trees.jpg)
 
-Thanks to the awesome work of [Luke Pflibsen-Jones](https://github.com/luketimothyjones) you can just drop the `ch_trees` folder into your blender addons folder and enable the plugin in user settings to start generating trees - now with a complete customisation UI! Download the latest version [here](https://github.com/friggog/tree-gen/archive/master.zip).
+Thanks to the awesome work of [Luke Pflibsen-Jones](https://github.com/luketimothyjones) you can just drop the `ch_trees` folder into your blender addons folder and enable the plugin in user settings to start generating trees - now with a complete customisation UI! 
+
+Download the latest version [here](https://github.com/friggog/tree-gen/archive/master.zip).
 
 &nbsp;
 
@@ -18,6 +20,8 @@ The customizer GUI
 [![The customizer interface](https://i.imgur.com/LO0i7SM.jpg)](https://i.imgur.com/AcxtG58.jpg)
 
 Below is a list of the available parameters and what they do. These can also be found by hovering over the respective input field in the Blender user interface.
+
+&nbsp;
 
 Leaf Parameters
 ---------------
@@ -52,6 +56,8 @@ Leaf Parameters
 **Blossom Rate** - Fractional rate at which blossom occurs relative to leaves (eg, .4 = 40% of the time a leaf is generated a blossom will be as well)
 
 **Blossom Scale** - Overall blossom scale
+
+&nbsp;
 
 Tree parameters
 ---------------
@@ -93,6 +99,8 @@ Tree parameters
 **Branch Thickness Ratio** - Ratio of the stem length to radius
 
 **Branch Thickness Ratio Power** - How drastically the branch radius is reduced between branching levels
+
+&nbsp;
 
 Branch Parameters
 -----------------
