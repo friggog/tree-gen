@@ -9,11 +9,7 @@ Thanks to the awesome work of [Luke Pflibsen-Jones](https://github.com/luketimot
 
 ## Available Parameters
 
-&nbsp;
-
 ### Leaf Parameters
-
-&nbsp;
 
 **Leaf Count** - Number of leaves or blossom on each of the deepest level of branches
 
@@ -48,9 +44,8 @@ Thanks to the awesome work of [Luke Pflibsen-Jones](https://github.com/luketimot
 
 &nbsp;
 
-### Tree parameters
 
-&nbsp;
+### Tree parameters
 
 **Tree Shape** - Controls shape of the tree by altering the first level branch length. Custom uses the envelope defined by the pruning parameters to control the tree shape directly rather than through pruning
 
@@ -94,9 +89,8 @@ Thanks to the awesome work of [Luke Pflibsen-Jones](https://github.com/luketimot
 
 &nbsp;
 
-### Branch Parameters
 
-&nbsp;
+### Branch Parameters
 
 **Number** - The maximum number of child branches at a given level on each parent branch. The first level parameter indicates the number of trunks coming from the floor, positioned in a rough circle facing outwards (see bamboo)
 
