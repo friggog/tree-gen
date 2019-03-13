@@ -7,9 +7,13 @@ Thanks to the awesome work of [Luke Pflibsen-Jones](https://github.com/luketimot
 
 ----
 
-## Available Parameters
+## Documentation
 
+Below is a list of the available parameters and what they do. These can also be found by hovering over the respective input field in the Blender user interface.
+
+--
 ### Leaf Parameters
+--
 
 **Leaf Count** - Number of leaves or blossom on each of the deepest level of branches
 
@@ -31,7 +35,7 @@ Thanks to the awesome work of [Luke Pflibsen-Jones](https://github.com/luketimot
 
 **Leaf Bend** - Fractional amount by which leaves are reoriented to face the light (upwards and outwards)
 
-&nbsp;
+--
 
 **Blossom Shape** - Predefined blossom shapes
  - Cherry
@@ -44,16 +48,15 @@ Thanks to the awesome work of [Luke Pflibsen-Jones](https://github.com/luketimot
 
 &nbsp;
 
-
+--
 ### Tree parameters
+--
 
 **Tree Shape** - Controls shape of the tree by altering the first level branch length. Custom uses the envelope defined by the pruning parameters to control the tree shape directly rather than through pruning
 
-&nbsp;
-
 **Level Count** - Number of levels of branching, typically 3 or 4
 
-&nbsp;
+--
 
 **Prune Ratio** - Fractional amount by which the effect of pruning is applied
 
@@ -65,23 +68,23 @@ Thanks to the awesome work of [Luke Pflibsen-Jones](https://github.com/luketimot
 
 **Prune Power (high)** - The curvature of the upper section of the pruning envelope. < 1 results in a convex shape, > 1 in concave
 
-&nbsp;
+--
 
 **Trunk Splits** - Number of splits at base height on trunk, if negative then the number of splits will be randomly chosen up to a maximum of |base splits|
 
 **Trunk Flare** - How much the radius at the base of the trunk increases
 
-&nbsp;
+--
 
 **Height** - Scale of the entire tree
 
 **Height variation** - Maximum variation in size of the entire tree
 
-&nbsp;
+--
 
 **Tropism** - Influence upon the growth direction of the tree in the x, y and z directions, the z element only applies to branches in the second level and above. Useful for simulating the effects of gravity, sunlight and wind
 
-&nbsp;
+--
 
 **Branch Thickness Ratio** - Ratio of the stem length to radius
 
@@ -89,8 +92,9 @@ Thanks to the awesome work of [Luke Pflibsen-Jones](https://github.com/luketimot
 
 &nbsp;
 
-
+--
 ### Branch Parameters
+--
 
 **Number** - The maximum number of child branches at a given level on each parent branch. The first level parameter indicates the number of trunks coming from the floor, positioned in a rough circle facing outwards (see bamboo)
 
@@ -106,7 +110,7 @@ Thanks to the awesome work of [Luke Pflibsen-Jones](https://github.com/luketimot
 
 **Radius Modifier** - (no description)
 
-&nbsp;
+--
 
 **Curve Resolution** - Number of segments in each branch
 
@@ -122,17 +126,17 @@ Thanks to the awesome work of [Luke Pflibsen-Jones](https://github.com/luketimot
 
 **Split Angle Variation** - Maximum variation in angle between dichotomous branches
 
-&nbsp;
+--
 
 **Bend Variation** - Maximum angle by which the direction of the branch may change from start to end, rotating about the branch’s local y-axis. Applied randomly at each segment
 
-&nbsp;
+--
 
 **Down Angle** - Controls the angle of the direction of a child branch away from that of its parent
 
 **Down Angle Variation** - Maximum variation in down angle, if < 0 then the value of down angle is distributed along the parent stem
 
-&nbsp;
+--
 
 **Rotation** - Angle around the parent branch between each child branch. If < 0 then child branches are directed this many degrees away from the downward direction in their parent's local basis (see palm leaves). For fanned branches, the fan will spread by this angle and for whorled branches, each whorl will rotate by this angle
 
