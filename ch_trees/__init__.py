@@ -24,7 +24,7 @@ def unregister():
     # Reversing order is best-practice
     bpy.utils.unregister_class(gui.TreeGenLoadParams)
     bpy.utils.unregister_class(gui.TreeGenSaveFile)
-    bpy.utils.register_class(gui.TreeGenCustomisePanel)
+    bpy.utils.unregister_class(gui.TreeGenCustomisePanel)
     bpy.utils.unregister_class(gui.TreeGenPanel)
     bpy.utils.unregister_class(gui.TreeGen)
 
