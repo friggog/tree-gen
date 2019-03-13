@@ -11,7 +11,7 @@ Thanks to the awesome work of [Luke Pflibsen-Jones](https://github.com/luketimot
 
 The customizer GUI
 
-[![The customizer interface](https://i.imgur.com/lX45Cdq.jpg)](https://i.imgur.com/AcxtG58.jpg)
+[![The customizer interface](https://i.imgur.com/LO0i7SM.jpg)](https://i.imgur.com/AcxtG58.jpg)
 
 &nbsp;
 
