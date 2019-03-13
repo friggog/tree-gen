@@ -9,6 +9,12 @@ Thanks to the awesome work of [Luke Pflibsen-Jones](https://github.com/luketimot
 
 ## Documentation
 
+The customizer GUI
+
+[![The customizer interface](https://i.imgur.com/lX45Cdq.jpg)](https://i.imgur.com/AcxtG58.jpg)
+
+&nbsp;
+
 Below is a list of the available parameters and what they do. These can also be found by hovering over the respective input field in the Blender user interface.
 
 --
