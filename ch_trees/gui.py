@@ -271,7 +271,7 @@ class TreeGenSaveFile(bpy.types.Operator):
             print('params = ' + pprint.pformat(params), file=output_file)
 
         parametric_items = _get_tree_types()
-        bpy.types.Scene.parametric_tree_type_input = bpy.props.EnumProperty(name="", items=parametric_items)
+        bpy.types.Scene.custom_tree_load_params_input = bpy.props.EnumProperty(name="", items=parametric_items)
 
         return {'FINISHED'}
 
