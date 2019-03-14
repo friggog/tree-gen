@@ -60,7 +60,7 @@ class TreeGen(bpy.types.Operator):
     # Nothing exciting here. Seed, leaf toggle, and simplify geometry toggle.
     _scene.seed_input = _props.IntProperty(name="", default=1, min=0, max=9999999)
     _scene.generate_leaves_input = _props.BoolProperty(name="Generate Leaves/Blossom", default=True)
-    _scene.simplify_geometry_input = _props.BoolProperty(name="Simplify Branch Geometry", default=False)
+    _scene.convert_to_mesh_input = _props.BoolProperty(name="Convert to Mesh", default=False)
 
     # Render inputs; auto-fill path input with user's home directory
     _scene.render_input = _props.BoolProperty(name="Render", default=False)
@@ -195,21 +195,8 @@ class TreeGen(bpy.types.Operator):
             parametric.gen.construct(params, scene.seed_input, scene.render_input, scene.render_output_path_input,
                                      scene.generate_leaves_input)
 
-            if scene.simplify_geometry_input:
-                from . import utilities
-                # update_log doesn't get a chance to print before Blender locks up, so a direct print is necessary
-                sys.stdout.write('Simplifying tree branch geometry. Blender will appear to crash; be patient.\n')
-                sys.stdout.flush()
-
-                # Catch exceptions and print them as strings
-                # This will hopefully reduce random crashes
-                try:
-                    utilities.simplify_branch_geometry(context)
-                    update_log('Geometry simplification complete\n\n')
-
-                except Exception:
-                    update_log('\n{}\n'.format(traceback.format_exc()))
-                    update_log('Geometry simplification failed\n\n')
+            if scene.convert_to_mesh_input:
+                bpy.ops.object.tree_gen_convert_to_mesh()
 
             update_log('Tree generated in {:.6f} seconds\n\n'.format(time.time() - start_time))
 
@@ -248,6 +235,34 @@ class TreeGen(bpy.types.Operator):
         return params
 
 
+class TreeGenConvertToMesh(bpy.types.Operator):
+    """Button to convert tree branch curve to mesh"""
+
+    bl_idname = "object.tree_gen_convert_to_mesh"
+    bl_category = "TreeGen"
+    bl_label = "Convert To Mesh"
+    bl_options = {'REGISTER'}
+    
+    def execute(self, context):
+        from . import utilities
+        
+        # update_log doesn't get a chance to print before Blender locks up, so a direct print is necessary
+        sys.stdout.write('\nConverting tree to mesh. Blender will appear to crash; be patient.\n')
+        sys.stdout.flush()
+
+        # Catch exceptions and print them as strings
+        # This will hopefully reduce random crashes
+        try:
+            utilities.convert_to_mesh(context)
+            update_log('Conversion to mesh complete\n\n')
+
+        except Exception:
+            update_log('\n{}\n'.format(traceback.format_exc()))
+            update_log('Conversion to mesh failed\n\n')
+        
+        return {'FINISHED'}
+
+                    
 class TreeGenSaveFile(bpy.types.Operator):
     """Button to save custom tree parameters"""
 
@@ -467,7 +482,7 @@ class TreeGenPanel(bpy.types.Panel):
         if scene.render_input:
             label_row('Filepath:', 'render_output_path_input', container=box)
         box.separator()
-        label_row('', 'simplify_geometry_input', checkbox=True, container=box)
+        label_row('', 'convert_to_mesh_input', checkbox=True, container=box)
         box.separator()
         label_row('Seed', 'seed_input', container=box)
         box.row()
@@ -475,3 +490,40 @@ class TreeGenPanel(bpy.types.Panel):
         layout.separator()
         layout.operator(TreeGen.bl_idname)
         layout.separator()
+        
+
+class TreeGenUtilitiesPanel(bpy.types.Panel):
+    """Provides interface for TreeGen-related utilities"""
+
+    bl_label = "TreeGen Utilities"
+    bl_idname = "OBJECT_PT_treegen_utilities"
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'TOOLS'
+    bl_category = 'TreeGen'
+    bl_context = (("objectmode"))
+    bl_options = {'DEFAULT_CLOSED'}
+    
+    def draw(self, context):
+        layout = self.layout
+        scene = context.scene
+
+        def label_row(label, prop, checkbox=False, dropdown=False, container=None):
+            # Helper method to shorten the UI code
+
+            if container is None:
+                container = layout
+
+            if dropdown:
+                col = container.column()
+                cont = col.split(percentage=.5, align=True)
+                cont.label(text=label)
+            else:
+                cont = container.row()
+
+            if checkbox or dropdown:
+                cont.prop(scene, prop)
+            else:
+                cont.prop(scene, prop, text=label)
+        
+        
+        layout.operator(TreeGenConvertToMesh.bl_idname)

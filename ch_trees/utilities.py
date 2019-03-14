@@ -61,7 +61,7 @@ def object_deleted(o):
         return True
 
 
-def simplify_branch_geometry(context, angle_limit=1.5):
+def convert_to_mesh(context, angle_limit=1.5):
     """
     Converts tree branches from curve to mesh, then runs a limited dissolve
     to reduce their geometric complexity with minimal quality loss.
@@ -75,7 +75,7 @@ def simplify_branch_geometry(context, angle_limit=1.5):
     try:
         tree = scene.objects.active
     except AttributeError:
-        raise Exception('Could not find tree while attempting to simplify branch geometry')
+        raise Exception('Could not find tree while attempting to convert to mesh')
 
     old_branches = None
     for child in tree.children:
@@ -84,7 +84,7 @@ def simplify_branch_geometry(context, angle_limit=1.5):
             break
 
     if old_branches is None:
-        raise Exception('No branches found while simplifying branch geometry')
+        raise Exception('No branches found while converting to mesh')
 
     # Convert the branches curve to a mesh, then get an editable copy
     old_branch_mesh = old_branches.to_mesh(scene, False, 'RENDER')
