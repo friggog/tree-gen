@@ -242,10 +242,10 @@ class TreeGenConvertToMesh(bpy.types.Operator):
     bl_category = "TreeGen"
     bl_label = "Convert To Mesh"
     bl_options = {'REGISTER'}
-    
+
     def execute(self, context):
         from . import utilities
-        
+
         # update_log doesn't get a chance to print before Blender locks up, so a direct print is necessary
         sys.stdout.write('\nConverting tree to mesh. Blender will appear to crash; be patient.\n')
         sys.stdout.flush()
@@ -259,10 +259,10 @@ class TreeGenConvertToMesh(bpy.types.Operator):
         except Exception:
             update_log('\n{}\n'.format(traceback.format_exc()))
             update_log('Conversion to mesh failed\n\n')
-        
+
         return {'FINISHED'}
 
-                    
+
 class TreeGenSaveFile(bpy.types.Operator):
     """Button to save custom tree parameters"""
 
