@@ -236,7 +236,7 @@ class TreeGen(bpy.types.Operator):
 
 
 class TreeGenConvertToMesh(bpy.types.Operator):
-    """Button to convert tree branch curve to mesh"""
+    """Convert tree branch curve to mesh"""
 
     bl_idname = "object.tree_gen_convert_to_mesh"
     bl_category = "TreeGen"
@@ -264,7 +264,7 @@ class TreeGenConvertToMesh(bpy.types.Operator):
 
 
 class TreeGenCreateLODs(bpy.types.Operator):
-    """Button to generate LODs"""
+    """Generate 3 LODs"""
 
     bl_idname = "object.tree_gen_create_lods"
     bl_category = "TreeGen"
@@ -292,7 +292,7 @@ class TreeGenCreateLODs(bpy.types.Operator):
 
 
 class TreeGenSaveFile(bpy.types.Operator):
-    """Button to save custom tree parameters"""
+    """Save custom tree parameters"""
 
     bl_idname = "object.tree_gen_custom_save"
     bl_category = "TreeGen"
@@ -320,7 +320,7 @@ class TreeGenSaveFile(bpy.types.Operator):
 
 
 class TreeGenLoadParams(bpy.types.Operator):
-    """Button to load custom tree parameters"""
+    """Load custom tree parameters"""
 
     bl_idname = "object.tree_gen_custom_load"
     bl_category = "TreeGen"
@@ -556,3 +556,5 @@ class TreeGenUtilitiesPanel(bpy.types.Panel):
 
         layout.operator(TreeGenConvertToMesh.bl_idname)
         layout.operator(TreeGenCreateLODs.bl_idname)
+
+        layout.separator()
