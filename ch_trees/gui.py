@@ -254,11 +254,39 @@ class TreeGenConvertToMesh(bpy.types.Operator):
         # This will hopefully reduce random crashes
         try:
             utilities.convert_to_mesh(context)
-            update_log('Conversion to mesh complete\n\n')
+            update_log('Conversion to mesh complete\n')
 
         except Exception:
             update_log('\n{}\n'.format(traceback.format_exc()))
-            update_log('Conversion to mesh failed\n\n')
+            update_log('Conversion to mesh failed\n')
+
+        return {'FINISHED'}
+
+
+class TreeGenCreateLODs(bpy.types.Operator):
+    """Button to generate LODs"""
+
+    bl_idname = "object.tree_gen_create_lods"
+    bl_category = "TreeGen"
+    bl_label = "Create LODs"
+    bl_options = {'REGISTER'}
+
+    def execute(self, context):
+        from . import utilities
+
+        # update_log doesn't get a chance to print before Blender locks up, so a direct print is necessary
+        sys.stdout.write('\nCreating LODs. Blender will appear to crash; be patient.\n')
+        sys.stdout.flush()
+
+        # Catch exceptions and print them as strings
+        # This will hopefully reduce random crashes
+        try:
+            utilities.generate_lods(context, 3)
+            update_log('LOD creation complete\n\n')
+
+        except Exception:
+            update_log('\n{}\n'.format(traceback.format_exc()))
+            update_log('LOD creation failed\n\n')
 
         return {'FINISHED'}
 
@@ -490,7 +518,7 @@ class TreeGenPanel(bpy.types.Panel):
         layout.separator()
         layout.operator(TreeGen.bl_idname)
         layout.separator()
-        
+
 
 class TreeGenUtilitiesPanel(bpy.types.Panel):
     """Provides interface for TreeGen-related utilities"""
@@ -502,7 +530,7 @@ class TreeGenUtilitiesPanel(bpy.types.Panel):
     bl_category = 'TreeGen'
     bl_context = (("objectmode"))
     bl_options = {'DEFAULT_CLOSED'}
-    
+
     def draw(self, context):
         layout = self.layout
         scene = context.scene
@@ -524,6 +552,7 @@ class TreeGenUtilitiesPanel(bpy.types.Panel):
                 cont.prop(scene, prop)
             else:
                 cont.prop(scene, prop, text=label)
-        
-        
+
+
         layout.operator(TreeGenConvertToMesh.bl_idname)
+        layout.operator(TreeGenCreateLODs.bl_idname)
