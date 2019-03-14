@@ -190,7 +190,25 @@ class TreeGen(bpy.types.Operator):
         # Handles conditional logic for generation method selection.
         scene = context.scene
         update_log('\n** Generating Tree **\n')
+
         try:
+            # Find the highest valid level
+            while scene.tree_levels_input > 1:
+                level_length = scene.tree_length_input[scene.tree_levels_input - 1]
+
+                if float(level_length) == 0.0:
+                    update_log('Hint: tree level ' + str(scene.tree_levels_input) + ' was ignored due to having a length of 0.0\n')
+                    scene.tree_levels_input -= 1
+                    level_length = scene.tree_length_input[scene.tree_levels_input - 1]
+
+                else:
+                    params['levels'] = scene.tree_levels_input
+                    break
+
+            if scene.tree_levels_input == 1:
+                update_log('All levels have a length of zero!\n')
+                return
+
             start_time = time.time()
             parametric.gen.construct(params, scene.seed_input, scene.render_input, scene.render_output_path_input,
                                      scene.generate_leaves_input)
