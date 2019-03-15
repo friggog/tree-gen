@@ -25,7 +25,7 @@ class _LogThread(threading.Thread):
             if msg == 'kill_thread':
                 break
 
-            sys.stdout.write(msg)
+            sys.stdout.write(str(msg))
             sys.stdout.flush()
 
         self.running = False
