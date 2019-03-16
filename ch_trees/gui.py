@@ -198,7 +198,8 @@ class TreeGen(bpy.types.Operator):
             if scene.convert_to_mesh_input:
                 bpy.ops.object.tree_gen_convert_to_mesh()
 
-            update_log('Tree generated in {:.6f} seconds\n\n'.format(time.time() - start_time))
+            update_log('\nTree generated in {:.6f} seconds\n\n'.format(time.time() - start_time))
+            update_log('')  # Ensure the prior gets printed
 
         # Reduce chance of Blender crashing when generation fails or the user does something ill-advised
         except Exception:

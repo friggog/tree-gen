@@ -115,23 +115,6 @@ def convert_to_mesh(context):  #, angle_limit=1.5):
     new_branches.parent = tree
 
 
-def auto_dissolve_limit(scene, parent, br_bmesh, angle_limit=1.5, new_mesh_container_name='Branches', new_mesh_name='branches'):
-    # Perform a limited dissolve
-    bmesh.ops.dissolve_limit(br_bmesh, verts=br_bmesh.verts, edges=br_bmesh.edges, angle_limit=radians(angle_limit))
-
-    # Create a new mesh and container object
-    new_branches = bpy.data.objects.new(new_mesh_container_name, bpy.data.meshes.new(new_mesh_name))
-    br_bmesh.to_mesh(new_branches.data)
-
-    # Purge bmesh from memory
-    br_bmesh.free()
-
-    # Make the mesh active in the scene, then associate it with the tree
-    scene.objects.link(new_branches)
-    new_branches.matrix_world = parent.matrix_world
-    new_branches.parent = parent
-
-
 def generate_lods(context, level_count=3):
     from ch_trees import parametric
     update_log = parametric.gen.update_log
@@ -149,23 +132,47 @@ def generate_lods(context, level_count=3):
             base_name = child.name
             child.name = child.name + '_LOD0'
             original = child
+            parent = child.parent
             break
 
     if original is None:
         raise Exception('No branches found while attempting to generate LODs')
 
-    # Convert the branches curve to a mesh, then get an editable copy
-    original_mesh = original.to_mesh(scene, False, 'RENDER')
+    # Create a mesh data container for use/reuse with mesh generation
+    curve_bmesh = bmesh.new()
 
-    dissolve_limits = [.5, 1.0, 1.6]
-    for level in range(level_count):
-        br_bmesh = bmesh.new()
-        br_bmesh.from_mesh(original_mesh)
-
+    resolutions = [3, 2, 1]
+    dissolve_ratios = [.9, .7, .5]
+    for level in range(0, level_count):
         lod_level_name = '_LOD' + str(level + 1)
-        auto_dissolve_limit(scene, tree, br_bmesh, dissolve_limits[level], new_mesh_container_name=base_name + lod_level_name, new_mesh_name='branches' + lod_level_name)
+
+        # Create copy of curve
+        new_curve = original.copy()
+
+        # Set the resolution of the new curve and convert to mesh
+        new_curve.data.resolution_u = resolutions[level]
+        curve_bmesh.from_mesh(new_curve.to_mesh(scene, settings='RENDER', apply_modifiers=False))
+        new_branches = bpy.data.objects.new(base_name + lod_level_name, bpy.data.meshes.new('branches' + lod_level_name))
+        curve_bmesh.to_mesh(new_branches.data)  # Copy data from curve_bmesh into new_branches
+        curve_bmesh.clear()
+
+        # Decimate
+        modifier = new_branches.modifiers.new('TreeDecimateMod', 'DECIMATE')
+        modifier.ratio = dissolve_ratios[level]
+
+        # Make the mesh active in the scene, then associate it with the tree
+        scene.objects.link(new_branches)
+        new_branches.matrix_world = parent.matrix_world
+        new_branches.parent = parent
+
+        # Switch to object mode and apply modifier
+        bpy.ops.object.mode_set(mode='OBJECT')
+        bpy.context.scene.objects.active = new_branches
+        bpy.ops.object.modifier_apply(modifier='TreeDecimateMod')
 
         update_log('\rLOD level ' + str(level + 1) + '/' + str(level_count) + ' generated')
+
+    curve_bmesh.free()
 
     update_log('\n')
 
