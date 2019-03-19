@@ -3,6 +3,7 @@ import bpy
 import traceback
 import threading
 import sys
+import importlib
 import os
 import time
 import pprint
@@ -164,7 +165,7 @@ class TreeGen(bpy.types.Operator):
     _scene.tree_blossom_rate_input = _props.FloatProperty(name="", description="Fractional rate at which blossom occurs relative to leaves", default=0, min=0, max=1)
 
     # Save location for custom tree params
-    _scene.custom_tree_save_overwrite_input = _props.BoolProperty(name="Overwrite if File Exists", default=False)
+    _scene.custom_tree_save_overwrite_input = _props.BoolProperty(name="Overwrite If File Exists", default=False)
     tree_save_location = os.path.sep.join((_get_addon_path_details()[2], 'parametric', 'tree_params', 'my_custom_tree.py'))
     _scene.custom_tree_save_location_input = _props.StringProperty(name="", default=tree_save_location)
 
@@ -324,6 +325,10 @@ class TreeGenSaveFile(bpy.types.Operator):
                 save_location = '{}_{}.py'.format(save_location_no_ext, counter)
                 counter += 1
 
+            #pycache_path = os.path.sep.join(save_location.split(os.path.sep)[:-1] + ['__pycache__'])
+            #if os.path.exists(pycache_path):
+            #    shutil.rmtree(pycache_path, ignore_errors=True)
+
         with open(save_location, 'w') as output_file:
             print('params = ' + pprint.pformat(params), file=output_file)
 
@@ -343,7 +348,13 @@ class TreeGenLoadParams(bpy.types.Operator):
 
     def execute(self, context):
         mod_name = context.scene.custom_tree_load_params_input
-        mod = __import__(mod_name, fromlist=[''])
+
+        # Delete old module if it exists, forcing Python to load the new file
+        if mod_name in sys.modules:
+            del sys.modules[mod_name]
+
+        importlib.invalidate_caches()  # Make sure Python doesn't import from __pycache__
+        mod = importlib.import_module(mod_name)
 
         params = tree_param.TreeParam(mod.params).params
 
@@ -475,7 +486,7 @@ class TreeGenCustomisePanel(bpy.types.Panel):
         box = layout.box()
         box.row()
         label_row('Save Location', 'custom_tree_save_location_input', container=box)
-        label_row('Overwrite if Exists', 'custom_tree_save_overwrite_input', checkbox=True, container=box)
+        label_row('Overwrite If File Exists', 'custom_tree_save_overwrite_input', checkbox=True, container=box)
         box.row()
         box.operator(TreeGenSaveFile.bl_idname)
         box.row()
