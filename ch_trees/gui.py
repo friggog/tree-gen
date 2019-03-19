@@ -180,10 +180,10 @@ class TreeGen(bpy.types.Operator):
     _scene.render_output_path_input = _props.StringProperty(name="", default=render_output_path)
 
     # Convert selected tree to mesh
-    _scene.tree_gen_convert_to_mesh_input = _props.BoolProperty(name="Convert to Mesh", default=False)
+    _scene.tree_gen_convert_to_mesh_input = _props.BoolProperty(name="Convert to Mesh", default=False, description="After generation, automatically convert to mesh.")
 
     # Create LODs
-    _scene.tree_gen_create_lods_input = _props.BoolProperty(name="Create LODs", default=False)
+    _scene.tree_gen_create_lods_input = _props.BoolProperty(name="Create LODs", default=False, description="After generation, create three copies of the tree (meshes) of decreasing quality. The original tree curve will be preserved, but can be converted using the 'Convert To Mesh' button.")
 
 
     # ---
