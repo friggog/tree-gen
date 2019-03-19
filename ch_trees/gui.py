@@ -57,15 +57,9 @@ class TreeGen(bpy.types.Operator):
     # These are switched between by TreeGenPanel.draw() based on the state of tree_gen_method_input
     parametric_items = _get_tree_types()
 
-    # Nothing exciting here. Seed, leaf toggle, and simplify geometry toggle.
+    # Nothing exciting here. Seed and leaf toggle
     _scene.seed_input = _props.IntProperty(name="", default=1, min=0, max=9999999)
     _scene.generate_leaves_input = _props.BoolProperty(name="Generate Leaves/Blossom", default=True)
-    _scene.convert_to_mesh_input = _props.BoolProperty(name="Convert to Mesh", default=False)
-
-    # Render inputs; auto-fill path input with user's home directory
-    _scene.render_input = _props.BoolProperty(name="Render", default=False)
-    render_output_path = os.path.sep.join((os.path.expanduser('~'), 'treegen_render.png'))
-    _scene.render_output_path_input = _props.StringProperty(name="", default=render_output_path)
 
     # ======================
     # Tree customizer inputs
@@ -174,8 +168,23 @@ class TreeGen(bpy.types.Operator):
     tree_save_location = os.path.sep.join((_get_addon_path_details()[2], 'parametric', 'tree_params', 'my_custom_tree.py'))
     _scene.custom_tree_save_location_input = _props.StringProperty(name="", default=tree_save_location)
 
+    # ----
+    # Utilities
+
     # Load custom params
     _scene.custom_tree_load_params_input = _props.EnumProperty(name="", default="ch_trees.parametric.tree_params.quaking_aspen", items=parametric_items)
+
+    # Render inputs; auto-fill path input with user's home directory
+    _scene.render_input = _props.BoolProperty(name="Render", default=False)
+    render_output_path = os.path.sep.join((os.path.expanduser('~'), 'treegen_render.png'))
+    _scene.render_output_path_input = _props.StringProperty(name="", default=render_output_path)
+
+    # Convert selected tree to mesh
+    _scene.tree_gen_convert_to_mesh_input = _props.BoolProperty(name="Convert to Mesh", default=False)
+
+    # Create LODs
+    _scene.tree_gen_create_lods_input = _props.BoolProperty(name="Create LODs", default=False)
+
 
     # ---
     def execute(self, context):
@@ -195,7 +204,11 @@ class TreeGen(bpy.types.Operator):
             parametric.gen.construct(params, scene.seed_input, scene.render_input, scene.render_output_path_input,
                                      scene.generate_leaves_input)
 
-            if scene.convert_to_mesh_input:
+            if scene.tree_gen_create_lods_input:
+                bpy.ops.object.tree_gen_create_lods()
+
+            # Tree is converted to mesh via LOD generation, so this needs to be secondary
+            elif scene.tree_gen_convert_to_mesh_input:
                 bpy.ops.object.tree_gen_convert_to_mesh()
 
             update_log('\nTree generated in {:.6f} seconds\n\n'.format(time.time() - start_time))
@@ -345,6 +358,9 @@ class TreeGenLoadParams(bpy.types.Operator):
             except TypeError as ex:
                 exception = str(ex).replace('TypeError: bpy_struct: item.attr = val: ', '')
                 print('TreeGen :: Error while loading preset "{}": {}'.format(name, exception))
+
+        # Pre-fill render output path with relevant name
+        scene.render_output_path_input = mod_name.replace('.py', '') + '_render.png'
 
         return {'FINISHED'}
 
@@ -505,19 +521,14 @@ class TreeGenPanel(bpy.types.Panel):
         box.row()
 
         layout.separator()
+
         box = layout.box()
         box.row()
-        label_row('', 'render_input', checkbox=True, container=box)
-        if scene.render_input:
-            label_row('Filepath:', 'render_output_path_input', container=box)
-        box.separator()
-        label_row('', 'convert_to_mesh_input', checkbox=True, container=box)
-        box.separator()
         label_row('Seed', 'seed_input', container=box)
         box.row()
+        box.operator(TreeGen.bl_idname)
+        box.row()
 
-        layout.separator()
-        layout.operator(TreeGen.bl_idname)
         layout.separator()
 
 
@@ -531,6 +542,7 @@ class TreeGenUtilitiesPanel(bpy.types.Panel):
     bl_category = 'TreeGen'
     bl_context = (("objectmode"))
     bl_options = {'DEFAULT_CLOSED'}
+
 
     def draw(self, context):
         layout = self.layout
@@ -554,8 +566,29 @@ class TreeGenUtilitiesPanel(bpy.types.Panel):
             else:
                 cont.prop(scene, prop, text=label)
 
+        box = layout.box()
+        box.row()
+        label_row('', 'render_input', checkbox=True, container=box)
+        if scene.render_input:
+            label_row('Filepath:', 'render_output_path_input', container=box)
+        box.row()
 
-        layout.operator(TreeGenConvertToMesh.bl_idname)
-        layout.operator(TreeGenCreateLODs.bl_idname)
+        layout.separator()
+
+        box = layout.box()
+        box.row()
+        label_row('', 'tree_gen_convert_to_mesh_input', checkbox=True, container=box)
+        box.row()
+        box.operator(TreeGenConvertToMesh.bl_idname)
+        box.row()
+
+        layout.separator()
+
+        box = layout.box()
+        box.row()
+        label_row('', 'tree_gen_create_lods_input', checkbox=True, container=box)
+        box.row()
+        box.operator(TreeGenCreateLODs.bl_idname)
+        box.row()
 
         layout.separator()
