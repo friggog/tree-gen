@@ -7,6 +7,7 @@ import importlib
 import os
 import time
 import pprint
+import queue
 from copy import deepcopy
 
 from ch_trees import parametric
@@ -14,6 +15,7 @@ from ch_trees.parametric.tree_params import tree_param
 
 
 update_log = parametric.gen.update_log
+main_thread_callback_queue = queue.Queue()
 
 
 def _get_addon_path_details():
@@ -190,36 +192,48 @@ class TreeGen(bpy.types.Operator):
     # ---
     def execute(self, context):
         # "Generate Tree" button callback
+
+        # Run the main thread executer modal
+        bpy.ops.object.treegen_main_thread_executer()
+
         params = TreeGen.get_params_from_customizer(context)
-        threading.Thread(daemon=True, target=self._construct, kwargs={'context': context, 'params': params}).start()
+        threading.Thread(daemon=True, target=self._construct, kwargs={'context': context, 'params': params, 'callback_queue': main_thread_callback_queue}).start()
+
         return {'FINISHED'}
 
     # ---
-    def _construct(self, context, params):
-        # The generator's main thread.
-        # Handles conditional logic for generation method selection.
+    def _construct(self, context, params, callback_queue):
+        # Thread target that handles most of the addon's operations
+
         scene = context.scene
         update_log('\n** Generating Tree **\n')
+
+        success = False
         try:
             start_time = time.time()
             parametric.gen.construct(params, scene.seed_input, scene.render_input, scene.render_output_path_input,
                                      scene.generate_leaves_input)
 
+            # This task has to be run on the main thread, so it gets queued instead of called
             if scene.tree_gen_create_lods_input:
-                bpy.ops.object.tree_gen_create_lods()
+                callback_queue.put(bpy.ops.object.tree_gen_create_lods)
 
             # Tree is converted to mesh via LOD generation, so this needs to be secondary
             elif scene.tree_gen_convert_to_mesh_input:
                 bpy.ops.object.tree_gen_convert_to_mesh()
 
-            update_log('\nTree generated in {:.6f} seconds\n\n'.format(time.time() - start_time))
-            update_log('')  # Ensure the prior gets printed
+            success = True
 
         # Reduce chance of Blender crashing when generation fails or the user does something ill-advised
         except Exception:
             sys.stdout.write('\n{}\n'.format(traceback.format_exc()))
             sys.stdout.write('Tree generation failed\n\n')
             sys.stdout.flush()
+
+        if success:
+            callback_queue.put('KILL')  # Kill modal used for running tasks in main thread
+
+            sys.stdout.write('\nTree generated in {:.6f} seconds\n\n'.format(time.time() - start_time))
 
     # ----
     @staticmethod
@@ -374,6 +388,57 @@ class TreeGenLoadParams(bpy.types.Operator):
         scene.render_output_path_input = mod_name.replace('.py', '') + '_render.png'
 
         return {'FINISHED'}
+
+
+class TreeGenMainThreadExecuter(bpy.types.Operator):
+    # Internal utility that handles executing tasks on the main thread.
+    # Necessary LOD creation
+
+    bl_idname = 'object.treegen_main_thread_executer'
+    bl_label = 'TreeGen internal executer utility'
+
+    _updating = False
+    _calcs_done = False
+    _timer = None
+
+    def run_tasks(self):
+        try:
+            queue_item = main_thread_callback_queue.get(False)
+
+            if type(queue_item) == str and queue_item == 'KILL':
+                self._calcs_done = True
+            else:
+                queue_item()
+
+        except queue.Empty:
+            pass
+
+    def modal(self, context, event):
+        if event.type == 'TIMER' and not self._updating:
+            self._updating = True
+            self.run_tasks()
+            self._updating = False
+
+        if self._calcs_done:
+            self.cancel(context)
+            return {'CANCELLED'}
+
+        return {'PASS_THROUGH'}
+
+    def execute(self, context):
+        context.window_manager.modal_handler_add(self)
+        self._updating = False
+        self._timer = context.window_manager.event_timer_add(0.5, context.window)
+
+        return {'RUNNING_MODAL'}
+
+    def cancel(self, context):
+        # If timer is None, we're already canceling
+        if self._timer is not None:
+            context.window_manager.event_timer_remove(self._timer)
+        self._timer = None
+
+        return None  # Appease Blender gods
 
 
 class TreeGenCustomisePanel(bpy.types.Panel):

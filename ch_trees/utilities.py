@@ -61,13 +61,9 @@ def object_deleted(o):
         return True
 
 
-def convert_to_mesh(context):  #, angle_limit=1.5):
+def convert_to_mesh(context):
     """
-    Converts tree branches from curve to mesh, then runs a limited dissolve
-    to reduce their geometric complexity with minimal quality loss.
-
-    [float] angle_limit :: Radian value in float form that provides the angle
-                           limit for the limited dissolve. Default is 1.5
+    Converts tree branches from curve to mesh
     """
 
     scene = context.scene
@@ -138,9 +134,6 @@ def generate_lods(context, level_count=3):
     if original is None:
         raise Exception('No branches found while attempting to generate LODs')
 
-    # Create a mesh data container for use/reuse with mesh generation
-    curve_bmesh = bmesh.new()
-
     resolutions = [3, 2, 1]
     dissolve_ratios = [.9, .7, .5]
     for level in range(0, level_count):
@@ -148,13 +141,23 @@ def generate_lods(context, level_count=3):
 
         # Create copy of curve
         new_curve = original.copy()
+        new_curve.data = original.data.copy()
+        curve_bmesh = bmesh.new()  # Create a modifiable mesh data container
 
         # Set the resolution of the new curve and convert to mesh
         new_curve.data.resolution_u = resolutions[level]
-        curve_bmesh.from_mesh(new_curve.to_mesh(scene, settings='RENDER', apply_modifiers=False))
+        temp_mesh = new_curve.to_mesh(bpy.context.scene, settings='RENDER', apply_modifiers=False)
+        curve_bmesh.from_mesh(temp_mesh)
+
+        # Purge temp mesh from memory
+        bpy.data.meshes.remove(temp_mesh)
+        del temp_mesh
+
+        # Create a new object, copy data from curve_bmesh into it, and purge bmesh from memory
         new_branches = bpy.data.objects.new(base_name + lod_level_name, bpy.data.meshes.new('branches' + lod_level_name))
-        curve_bmesh.to_mesh(new_branches.data)  # Copy data from curve_bmesh into new_branches
+        curve_bmesh.to_mesh(new_branches.data)
         curve_bmesh.clear()
+        curve_bmesh.free()
 
         # Decimate
         modifier = new_branches.modifiers.new('TreeDecimateMod', 'DECIMATE')
@@ -165,14 +168,20 @@ def generate_lods(context, level_count=3):
         new_branches.matrix_world = parent.matrix_world
         new_branches.parent = parent
 
-        # Switch to object mode and apply modifier
-        bpy.ops.object.mode_set(mode='OBJECT')
+        # Select new branches and make them the active object
+        bpy.ops.object.select_all(action='DESELECT')
+        new_branches.select = True
         bpy.context.scene.objects.active = new_branches
+
         bpy.ops.object.modifier_apply(modifier='TreeDecimateMod')
 
-        update_log('\rLOD level ' + str(level + 1) + '/' + str(level_count) + ' generated')
+        # Purge old data from memory
+        bpy.data.curves.remove(new_curve.data)
+        if not object_deleted(new_curve):
+            bpy.data.objects.remove(new_curve, True)
+        del new_curve
 
-    curve_bmesh.free()
+        update_log('\rLOD level ' + str(level + 1) + '/' + str(level_count) + ' generated')
 
     update_log('\n')
 

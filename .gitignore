@@ -113,3 +113,4 @@ venv.bak/
 build.bat
 staging/
 .idea/
+build_and_run.bat
