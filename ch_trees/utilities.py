@@ -9,6 +9,8 @@ from queue import Queue
 
 
 class _LogThread(threading.Thread):
+    # Set to run as a daemon, so this thread kills itself at program termination
+
     def __init__(self, queue):
         threading.Thread.__init__(self)
 
@@ -21,10 +23,6 @@ class _LogThread(threading.Thread):
 
         while True:
             msg = self.queue.get()
-
-            if msg == 'kill_thread':
-                break
-
             sys.stdout.write(str(msg))
             sys.stdout.flush()
 
