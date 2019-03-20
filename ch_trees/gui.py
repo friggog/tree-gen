@@ -357,10 +357,6 @@ class TreeGenSaveFile(bpy.types.Operator):
                 save_location = '{}_{}.py'.format(save_location_no_ext, counter)
                 counter += 1
 
-            #pycache_path = os.path.sep.join(save_location.split(os.path.sep)[:-1] + ['__pycache__'])
-            #if os.path.exists(pycache_path):
-            #    shutil.rmtree(pycache_path, ignore_errors=True)
-
         with open(save_location, 'w') as output_file:
             print('params = ' + pprint.pformat(params), file=output_file)
 
@@ -403,7 +399,7 @@ class TreeGenLoadParams(bpy.types.Operator):
                 print('TreeGen :: Error while loading preset "{}": {}'.format(name, exception))
 
         # Pre-fill render output path with relevant name
-        scene.render_output_path_input = mod_name.replace('.py', '') + '_render.png'
+        scene.render_output_path_input = os.path.sep.join((_get_addon_path_details()[2], 'parametric', 'tree_params', mod_name.split('.')[-1].replace('.py', '') + '_render.png'))
 
         return {'FINISHED'}
 
