@@ -7,6 +7,4 @@ Thanks to the awesome work of [Luke Pflibsen-Jones](https://github.com/luketimot
 
 Download the latest version [here](https://github.com/friggog/tree-gen/archive/master.zip).
 
-&nbsp;
-
 (WIP) Docmentation is available on the [Wiki](https://github.com/friggog/tree-gen/wiki).
