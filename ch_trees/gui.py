@@ -58,7 +58,7 @@ class TreeGen(bpy.types.Operator):
     parametric_items = _get_tree_types()
 
     # Nothing exciting here. Seed, leaf toggle, and simplify geometry toggle.
-    _scene.seed_input = _props.IntProperty(name="", default=1, min=0, max=9999999)
+    _scene.seed_input = _props.IntProperty(name="", default=0, min=0, max=9999999)
     _scene.generate_leaves_input = _props.BoolProperty(name="Generate Leaves/Blossom", default=True)
     _scene.simplify_geometry_input = _props.BoolProperty(name="Simplify Branch Geometry", default=False)
 
