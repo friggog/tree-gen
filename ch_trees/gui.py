@@ -282,7 +282,7 @@ class TreeGen(bpy.types.Operator):
 
 
 class TreeGenRender(bpy.types.Operator):
-    """Create render of tree"""
+    """Create a render of the selected tree"""
 
     bl_idname = "object.tree_gen_render_tree"
     bl_category = "TreeGen"
@@ -295,7 +295,7 @@ class TreeGenRender(bpy.types.Operator):
 
 
 class TreeGenConvertToMesh(bpy.types.Operator):
-    """Convert tree branch curve to mesh"""
+    """Convert the selected tree's branches curve to mesh"""
 
     bl_idname = "object.tree_gen_convert_to_mesh"
     bl_category = "TreeGen"
@@ -323,7 +323,7 @@ class TreeGenConvertToMesh(bpy.types.Operator):
 
 
 class TreeGenCreateLODs(bpy.types.Operator):
-    """Generate 3 LODs"""
+    """Generate 3 LODs for the selected tree"""
 
     bl_idname = "object.tree_gen_create_lods"
     bl_category = "TreeGen"
