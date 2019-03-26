@@ -3,16 +3,19 @@ import bpy
 import traceback
 import threading
 import sys
+import importlib
 import os
 import time
 import pprint
+import queue
 from copy import deepcopy
 
-from ch_trees import parametric
+from ch_trees import parametric, utilities
 from ch_trees.parametric.tree_params import tree_param
 
 
 update_log = parametric.gen.update_log
+main_thread_callback_queue = queue.Queue()
 
 
 def _get_addon_path_details():
@@ -53,19 +56,13 @@ class TreeGen(bpy.types.Operator):
     _scene = bpy.types.Scene
     _props = bpy.props
 
-    # Drop-downs containing tree options for each generation method
-    # These are switched between by TreeGenPanel.draw() based on the state of tree_gen_method_input
+    # Drop-down containing tree options
     parametric_items = _get_tree_types()
+    _scene.custom_tree_load_params_input = _props.EnumProperty(name="", default="ch_trees.parametric.tree_params.quaking_aspen", items=parametric_items)
 
-    # Nothing exciting here. Seed, leaf toggle, and simplify geometry toggle.
+    # Nothing exciting here. Seed and leaf toggle
     _scene.seed_input = _props.IntProperty(name="", default=0, min=0, max=9999999)
     _scene.generate_leaves_input = _props.BoolProperty(name="Generate Leaves/Blossom", default=True)
-    _scene.simplify_geometry_input = _props.BoolProperty(name="Simplify Branch Geometry", default=False)
-
-    # Render inputs; auto-fill path input with user's home directory
-    _scene.render_input = _props.BoolProperty(name="Render", default=False)
-    render_output_path = os.path.sep.join((os.path.expanduser('~'), 'treegen_render.png'))
-    _scene.render_output_path_input = _props.StringProperty(name="", default=render_output_path)
 
     # ======================
     # Tree customizer inputs
@@ -170,26 +167,47 @@ class TreeGen(bpy.types.Operator):
     _scene.tree_blossom_rate_input = _props.FloatProperty(name="", description="Fractional rate at which blossom occurs relative to leaves", default=0, min=0, max=1)
 
     # Save location for custom tree params
-    _scene.custom_tree_save_overwrite_input = _props.BoolProperty(name="Overwrite if File Exists", default=False)
+    _scene.custom_tree_save_overwrite_input = _props.BoolProperty(name="Overwrite If File Exists", default=False)
     tree_save_location = os.path.sep.join((_get_addon_path_details()[2], 'parametric', 'tree_params', 'my_custom_tree.py'))
     _scene.custom_tree_save_location_input = _props.StringProperty(name="", default=tree_save_location)
 
-    # Load custom params
-    _scene.custom_tree_load_params_input = _props.EnumProperty(name="", default="ch_trees.parametric.tree_params.quaking_aspen", items=parametric_items)
+    # ----
+    # Utilities
+
+    # Render inputs; auto-fill path input with user's home directory
+    _scene.render_input = _props.BoolProperty(name="Render After Generation", default=False)
+    render_output_path = os.path.sep.join((os.path.expanduser('~'), 'treegen_render.png'))
+    _scene.render_output_path_input = _props.StringProperty(name="", default=render_output_path)
+
+    # Convert selected tree to mesh
+    _scene.tree_gen_convert_to_mesh_input = _props.BoolProperty(name="Convert to Mesh After Generation", default=False,
+                                                                description="After generation, automatically convert the branches from a curve to a mesh.")
+
+    # Create LODs
+    _scene.tree_gen_create_lods_input = _props.BoolProperty(name="Create LODs After Generation", default=False,
+                                                            description="After generation, create three copies of the tree (meshes) of decreasing quality. The original tree curve will be preserved, but can be converted using the 'Convert To Mesh' button.")
+
 
     # ---
     def execute(self, context):
         # "Generate Tree" button callback
+
+        # Run the main thread executer modal
+        bpy.ops.object.treegen_main_thread_executer()
+
         params = TreeGen.get_params_from_customizer(context)
-        threading.Thread(daemon=True, target=self._construct, kwargs={'context': context, 'params': params}).start()
+        threading.Thread(daemon=True, target=self._construct, kwargs={'context': context, 'params': params, 'callback_queue': main_thread_callback_queue}).start()
+
         return {'FINISHED'}
 
     # ---
-    def _construct(self, context, params):
-        # The generator's main thread.
-        # Handles conditional logic for generation method selection.
+    def _construct(self, context, params, callback_queue):
+        # Thread target that handles most of the addon's operations
+
         scene = context.scene
         update_log('\n** Generating Tree **\n')
+
+        success = False
 
         try:
             # Find the highest valid level
@@ -199,7 +217,6 @@ class TreeGen(bpy.types.Operator):
                 if float(level_length) == 0.0:
                     update_log('Hint: tree level ' + str(scene.tree_levels_input) + ' was ignored due to having a length of 0.0\n')
                     scene.tree_levels_input -= 1
-                    level_length = scene.tree_length_input[scene.tree_levels_input - 1]
 
                 else:
                     params['levels'] = scene.tree_levels_input
@@ -210,32 +227,30 @@ class TreeGen(bpy.types.Operator):
                 return
 
             start_time = time.time()
-            parametric.gen.construct(params, scene.seed_input, scene.render_input, scene.render_output_path_input,
-                                     scene.generate_leaves_input)
+            parametric.gen.construct(params, scene.seed_input, scene.generate_leaves_input)
 
-            if scene.simplify_geometry_input:
-                from . import utilities
-                # update_log doesn't get a chance to print before Blender locks up, so a direct print is necessary
-                sys.stdout.write('Simplifying tree branch geometry. Blender will appear to crash; be patient.\n')
-                sys.stdout.flush()
+            if scene.render_input:
+                callback_queue.put(bpy.ops.object.tree_gen_render_tree)
 
-                # Catch exceptions and print them as strings
-                # This will hopefully reduce random crashes
-                try:
-                    utilities.simplify_branch_geometry(context)
-                    update_log('Geometry simplification complete\n\n')
+            # This task has to be run on the main thread, so it gets queued instead of called
+            if scene.tree_gen_create_lods_input:
+                callback_queue.put(bpy.ops.object.tree_gen_create_lods)
 
-                except Exception:
-                    update_log('\n{}\n'.format(traceback.format_exc()))
-                    update_log('Geometry simplification failed\n\n')
+            # Tree is converted to mesh via LOD generation, so this needs to be secondary
+            elif scene.tree_gen_convert_to_mesh_input:
+                bpy.ops.object.tree_gen_convert_to_mesh()
 
-            update_log('Tree generated in {:.6f} seconds\n\n'.format(time.time() - start_time))
+            success = True
 
         # Reduce chance of Blender crashing when generation fails or the user does something ill-advised
         except Exception:
             sys.stdout.write('\n{}\n'.format(traceback.format_exc()))
             sys.stdout.write('Tree generation failed\n\n')
             sys.stdout.flush()
+
+        if success:
+            callback_queue.put('KILL')  # Kill modal used for running tasks in main thread
+            sys.stdout.write('\nTree generated in {:.6f} seconds\n\n'.format(time.time() - start_time))
 
     # ----
     @staticmethod
@@ -266,8 +281,77 @@ class TreeGen(bpy.types.Operator):
         return params
 
 
+class TreeGenRender(bpy.types.Operator):
+    """Create a render of the selected tree"""
+
+    bl_idname = "object.tree_gen_render_tree"
+    bl_category = "TreeGen"
+    bl_label = "Render Tree"
+    bl_options = {'REGISTER'}
+
+    def execute(self, context):
+        utilities.render_tree(context.scene.render_output_path_input)
+        return {'FINISHED'}
+
+
+class TreeGenConvertToMesh(bpy.types.Operator):
+    """Convert the selected tree's branches curve to mesh"""
+
+    bl_idname = "object.tree_gen_convert_to_mesh"
+    bl_category = "TreeGen"
+    bl_label = "Convert To Mesh"
+    bl_options = {'REGISTER'}
+
+    def execute(self, context):
+        from . import utilities
+
+        # update_log doesn't get a chance to print before Blender locks up, so a direct print is necessary
+        sys.stdout.write('\nConverting tree to mesh. Blender will appear to crash; be patient.\n')
+        sys.stdout.flush()
+
+        # Catch exceptions and print them as strings
+        # This will hopefully reduce random crashes
+        try:
+            utilities.convert_to_mesh(context)
+            update_log('Conversion to mesh complete\n')
+
+        except Exception:
+            update_log('\n{}\n'.format(traceback.format_exc()))
+            update_log('Conversion to mesh failed\n')
+
+        return {'FINISHED'}
+
+
+class TreeGenCreateLODs(bpy.types.Operator):
+    """Generate 3 LODs for the selected tree"""
+
+    bl_idname = "object.tree_gen_create_lods"
+    bl_category = "TreeGen"
+    bl_label = "Create LODs"
+    bl_options = {'REGISTER'}
+
+    def execute(self, context):
+        from . import utilities
+
+        # update_log doesn't get a chance to print before Blender locks up, so a direct print is necessary
+        sys.stdout.write('\nCreating LODs. Blender will appear to crash; be patient.\n')
+        sys.stdout.flush()
+
+        # Catch exceptions and print them as strings
+        # This will hopefully reduce random crashes
+        try:
+            utilities.generate_lods(context, 3)
+            update_log('LOD creation complete\n\n')
+
+        except Exception:
+            update_log('\n{}\n'.format(traceback.format_exc()))
+            update_log('LOD creation failed\n\n')
+
+        return {'FINISHED'}
+
+
 class TreeGenSaveFile(bpy.types.Operator):
-    """Button to save custom tree parameters"""
+    """Save custom tree parameters"""
 
     bl_idname = "object.tree_gen_custom_save"
     bl_category = "TreeGen"
@@ -295,7 +379,7 @@ class TreeGenSaveFile(bpy.types.Operator):
 
 
 class TreeGenLoadParams(bpy.types.Operator):
-    """Button to load custom tree parameters"""
+    """Load custom tree parameters"""
 
     bl_idname = "object.tree_gen_custom_load"
     bl_category = "TreeGen"
@@ -304,7 +388,13 @@ class TreeGenLoadParams(bpy.types.Operator):
 
     def execute(self, context):
         mod_name = context.scene.custom_tree_load_params_input
-        mod = __import__(mod_name, fromlist=[''])
+
+        # Delete old module if it exists, forcing Python to load the new file
+        if mod_name in sys.modules:
+            del sys.modules[mod_name]
+
+        importlib.invalidate_caches()  # Make sure Python doesn't import from __pycache__
+        mod = importlib.import_module(mod_name)
 
         params = tree_param.TreeParam(mod.params).params
 
@@ -320,7 +410,61 @@ class TreeGenLoadParams(bpy.types.Operator):
                 exception = str(ex).replace('TypeError: bpy_struct: item.attr = val: ', '')
                 print('TreeGen :: Error while loading preset "{}": {}'.format(name, exception))
 
+        # Pre-fill render output path with relevant name
+        scene.render_output_path_input = os.path.sep.join((_get_addon_path_details()[2], 'parametric', 'tree_params', mod_name.split('.')[-1].replace('.py', '') + '_render.png'))
+
         return {'FINISHED'}
+
+
+class TreeGenMainThreadExecuter(bpy.types.Operator):
+    # Internal utility that handles executing tasks on the main thread.
+    # Necessary LOD creation
+
+    bl_idname = 'object.treegen_main_thread_executer'
+    bl_label = 'TreeGen internal executer utility'
+
+    _updating = False
+    _calcs_done = False
+    _timer = None
+
+    def run_tasks(self):
+        try:
+            queue_item = main_thread_callback_queue.get(False)
+
+            if type(queue_item) == str and queue_item == 'KILL':
+                self._calcs_done = True
+            else:
+                queue_item()
+
+        except queue.Empty:
+            pass
+
+    def modal(self, context, event):
+        if event.type == 'TIMER' and not self._updating:
+            self._updating = True
+            self.run_tasks()
+            self._updating = False
+
+        if self._calcs_done:
+            self.cancel(context)
+            return {'CANCELLED'}
+
+        return {'PASS_THROUGH'}
+
+    def execute(self, context):
+        context.window_manager.modal_handler_add(self)
+        self._updating = False
+        self._timer = context.window_manager.event_timer_add(0.5, context.window)
+
+        return {'RUNNING_MODAL'}
+
+    def cancel(self, context):
+        # If timer is None, we're already canceling
+        if self._timer is not None:
+            context.window_manager.event_timer_remove(self._timer)
+        self._timer = None
+
+        return None  # Appease Blender gods
 
 
 class TreeGenCustomisePanel(bpy.types.Panel):
@@ -433,7 +577,7 @@ class TreeGenCustomisePanel(bpy.types.Panel):
         box = layout.box()
         box.row()
         label_row('Save Location', 'custom_tree_save_location_input', container=box)
-        label_row('Overwrite if Exists', 'custom_tree_save_overwrite_input', checkbox=True, container=box)
+        label_row('Overwrite If File Exists', 'custom_tree_save_overwrite_input', checkbox=True, container=box)
         box.row()
         box.operator(TreeGenSaveFile.bl_idname)
         box.row()
@@ -479,17 +623,75 @@ class TreeGenPanel(bpy.types.Panel):
         box.row()
 
         layout.separator()
+
         box = layout.box()
         box.row()
-        label_row('', 'render_input', checkbox=True, container=box)
-        if scene.render_input:
-            label_row('Filepath:', 'render_output_path_input', container=box)
-        box.separator()
-        label_row('', 'simplify_geometry_input', checkbox=True, container=box)
-        box.separator()
         label_row('Seed', 'seed_input', container=box)
+        box.row()
+        box.operator(TreeGen.bl_idname)
         box.row()
 
         layout.separator()
-        layout.operator(TreeGen.bl_idname)
+
+
+class TreeGenUtilitiesPanel(bpy.types.Panel):
+    """Provides interface for TreeGen-related utilities"""
+
+    bl_label = "TreeGen Utilities"
+    bl_idname = "OBJECT_PT_treegen_utilities"
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'TOOLS'
+    bl_category = 'TreeGen'
+    bl_context = (("objectmode"))
+    bl_options = {'DEFAULT_CLOSED'}
+
+
+    def draw(self, context):
+        layout = self.layout
+        scene = context.scene
+
+        def label_row(label, prop, checkbox=False, dropdown=False, container=None):
+            # Helper method to shorten the UI code
+
+            if container is None:
+                container = layout
+
+            if dropdown:
+                col = container.column()
+                cont = col.split(percentage=.5, align=True)
+                cont.label(text=label)
+            else:
+                cont = container.row()
+
+            if checkbox or dropdown:
+                cont.prop(scene, prop)
+            else:
+                cont.prop(scene, prop, text=label)
+
+        box = layout.box()
+        box.row()
+        label_row('', 'render_input', checkbox=True, container=box)
+        label_row('Filepath:', 'render_output_path_input', container=box)
+        box.row()
+        box.operator(TreeGenRender.bl_idname)
+        box.row()
+
+        layout.separator()
+
+        box = layout.box()
+        box.row()
+        label_row('', 'tree_gen_convert_to_mesh_input', checkbox=True, container=box)
+        box.row()
+        box.operator(TreeGenConvertToMesh.bl_idname)
+        box.row()
+
+        layout.separator()
+
+        box = layout.box()
+        box.row()
+        label_row('', 'tree_gen_create_lods_input', checkbox=True, container=box)
+        box.row()
+        box.operator(TreeGenCreateLODs.bl_idname)
+        box.row()
+
         layout.separator()

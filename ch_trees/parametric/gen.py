@@ -1231,7 +1231,7 @@ def scale_bezier_handles_for_flare(stem, max_points_per_seg):
         point.handle_right = point.co + (point.handle_right - point.co) / max_points_per_seg
 
 
-def construct(params, seed=0, render=False, out_path=None, generate_leaves=True):
+def construct(params, seed=0, generate_leaves=True):
     """Construct the tree"""
 
     if seed == 0:
@@ -1247,41 +1247,3 @@ def construct(params, seed=0, render=False, out_path=None, generate_leaves=True)
     del t.branches_curve
     del t
 
-    if render:
-        update_log('\nRendering Scene\n')
-
-        context = bpy.context
-
-        targets = None
-        for obj in context.scene.objects:
-            obj.select = False
-            targets = [obj] + [child for child in obj.children] if obj.name.startswith('Tree') else targets
-
-        if targets is None:
-            print('Could not find a tree to render')
-            return
-
-        for target in targets:
-            target.select = True
-
-        bpy.ops.view3d.camera_to_view_selected()
-
-        time.sleep(.2)
-
-        try:
-            camera = bpy.data.objects["Camera"]
-        except KeyError:
-            print('Could not find camera to capture with')
-            return
-
-        inv = camera.matrix_world.copy()
-        inv.invert()
-
-        vec = mathutils.Vector((0.0, 0, 1.0))  # move camera back a bit
-        vec_rot = vec * inv  # vec aligned to local axis
-        camera.location = camera.location + vec_rot
-
-        bpy.data.scenes['Scene'].render.filepath = out_path
-        bpy.ops.render.render(write_still=True)
-
-    update_log('kill_thread')  # Gracefully shuts down logger thread
