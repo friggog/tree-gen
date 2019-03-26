@@ -13,7 +13,7 @@ params = {
     'down_angle_v': [-0, 20, 10, 10],
     'rotate': [-0, 100, 140, 77],
     'rotate_v': [-0, 0, 0, 0],
-    'branches': [-0, 70, 75, 10],
+    'branches': [1, 70, 75, 10],
     'length': [1, 1, 1, 0],
     'length_v': [0, 0, 0, 0],
     'taper': [2, 1, 1, 1],
