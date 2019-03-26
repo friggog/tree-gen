@@ -252,9 +252,6 @@ class TreeGen(bpy.types.Operator):
             callback_queue.put('KILL')  # Kill modal used for running tasks in main thread
             sys.stdout.write('\nTree generated in {:.6f} seconds\n\n'.format(time.time() - start_time))
 
-        # Gracefully shuts down logger thread
-        update_log('kill_thread')
-
     # ----
     @staticmethod
     def get_params_from_customizer(context):

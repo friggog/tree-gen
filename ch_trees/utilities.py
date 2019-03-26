@@ -33,9 +33,10 @@ def get_logger(logging):
     global log_thread, thread_queue
 
     if logging:
-        thread_queue = Queue()
-        log_thread = _LogThread(thread_queue)
-        log_thread.start()
+        if log_thread is None:
+            thread_queue = Queue()
+            log_thread = _LogThread(thread_queue)
+            log_thread.start()
 
         def update_log(msg):
             global log_thread
