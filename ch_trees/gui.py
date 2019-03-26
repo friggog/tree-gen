@@ -10,7 +10,7 @@ import pprint
 import queue
 from copy import deepcopy
 
-from ch_trees import parametric
+from ch_trees import parametric, utilities
 from ch_trees.parametric.tree_params import tree_param
 
 
@@ -56,9 +56,9 @@ class TreeGen(bpy.types.Operator):
     _scene = bpy.types.Scene
     _props = bpy.props
 
-    # Drop-downs containing tree options for each generation method
-    # These are switched between by TreeGenPanel.draw() based on the state of tree_gen_method_input
+    # Drop-down containing tree options
     parametric_items = _get_tree_types()
+    _scene.custom_tree_load_params_input = _props.EnumProperty(name="", default="ch_trees.parametric.tree_params.quaking_aspen", items=parametric_items)
 
     # Nothing exciting here. Seed and leaf toggle
     _scene.seed_input = _props.IntProperty(name="", default=0, min=0, max=9999999)
@@ -174,19 +174,18 @@ class TreeGen(bpy.types.Operator):
     # ----
     # Utilities
 
-    # Load custom params
-    _scene.custom_tree_load_params_input = _props.EnumProperty(name="", default="ch_trees.parametric.tree_params.quaking_aspen", items=parametric_items)
-
     # Render inputs; auto-fill path input with user's home directory
-    _scene.render_input = _props.BoolProperty(name="Render", default=False)
+    _scene.render_input = _props.BoolProperty(name="Render After Generation", default=False)
     render_output_path = os.path.sep.join((os.path.expanduser('~'), 'treegen_render.png'))
     _scene.render_output_path_input = _props.StringProperty(name="", default=render_output_path)
 
     # Convert selected tree to mesh
-    _scene.tree_gen_convert_to_mesh_input = _props.BoolProperty(name="Convert to Mesh", default=False, description="After generation, automatically convert to mesh.")
+    _scene.tree_gen_convert_to_mesh_input = _props.BoolProperty(name="Convert to Mesh After Generation", default=False,
+                                                                description="After generation, automatically convert the branches from a curve to a mesh.")
 
     # Create LODs
-    _scene.tree_gen_create_lods_input = _props.BoolProperty(name="Create LODs", default=False, description="After generation, create three copies of the tree (meshes) of decreasing quality. The original tree curve will be preserved, but can be converted using the 'Convert To Mesh' button.")
+    _scene.tree_gen_create_lods_input = _props.BoolProperty(name="Create LODs After Generation", default=False,
+                                                            description="After generation, create three copies of the tree (meshes) of decreasing quality. The original tree curve will be preserved, but can be converted using the 'Convert To Mesh' button.")
 
 
     # ---
@@ -218,7 +217,6 @@ class TreeGen(bpy.types.Operator):
                 if float(level_length) == 0.0:
                     update_log('Hint: tree level ' + str(scene.tree_levels_input) + ' was ignored due to having a length of 0.0\n')
                     scene.tree_levels_input -= 1
-                    level_length = scene.tree_length_input[scene.tree_levels_input - 1]
 
                 else:
                     params['levels'] = scene.tree_levels_input
@@ -229,8 +227,10 @@ class TreeGen(bpy.types.Operator):
                 return
 
             start_time = time.time()
-            parametric.gen.construct(params, scene.seed_input, scene.render_input, scene.render_output_path_input,
-                                     scene.generate_leaves_input)
+            parametric.gen.construct(params, scene.seed_input, scene.generate_leaves_input)
+
+            if scene.render_input:
+                callback_queue.put(bpy.ops.object.tree_gen_render_tree)
 
             # This task has to be run on the main thread, so it gets queued instead of called
             if scene.tree_gen_create_lods_input:
@@ -251,6 +251,9 @@ class TreeGen(bpy.types.Operator):
         if success:
             callback_queue.put('KILL')  # Kill modal used for running tasks in main thread
             sys.stdout.write('\nTree generated in {:.6f} seconds\n\n'.format(time.time() - start_time))
+
+        # Gracefully shuts down logger thread
+        update_log('kill_thread')
 
     # ----
     @staticmethod
@@ -279,6 +282,19 @@ class TreeGen(bpy.types.Operator):
                 pass  # Skip missing attributes, reverting to default
 
         return params
+
+
+class TreeGenRender(bpy.types.Operator):
+    """Create render of tree"""
+
+    bl_idname = "object.tree_gen_render_tree"
+    bl_category = "TreeGen"
+    bl_label = "Render Tree"
+    bl_options = {'REGISTER'}
+
+    def execute(self, context):
+        utilities.render_tree(context.scene.render_output_path_input)
+        return {'FINISHED'}
 
 
 class TreeGenConvertToMesh(bpy.types.Operator):
@@ -658,8 +674,9 @@ class TreeGenUtilitiesPanel(bpy.types.Panel):
         box = layout.box()
         box.row()
         label_row('', 'render_input', checkbox=True, container=box)
-        if scene.render_input:
-            label_row('Filepath:', 'render_output_path_input', container=box)
+        label_row('Filepath:', 'render_output_path_input', container=box)
+        box.row()
+        box.operator(TreeGenRender.bl_idname)
         box.row()
 
         layout.separator()
