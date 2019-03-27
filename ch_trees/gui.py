@@ -181,11 +181,11 @@ class TreeGen(bpy.types.Operator):
 
     # Convert selected tree to mesh
     _scene.tree_gen_convert_to_mesh_input = _props.BoolProperty(name="Convert to Mesh After Generation", default=False,
-                                                                description="After generation, automatically convert the branches from a curve to a mesh.")
+                                                                description="After generation, automatically convert the branches from a curve to a mesh")
 
     # Create LODs
     _scene.tree_gen_create_lods_input = _props.BoolProperty(name="Create LODs After Generation", default=False,
-                                                            description="After generation, create three copies of the tree (meshes) of decreasing quality. The original tree curve will be preserved, but can be converted using the 'Convert To Mesh' button.")
+                                                            description="After generation, create three copies of the tree (as meshes) of decreasing quality. The original tree curve will stay a curve unless \"Convert to Mesh After Generation\" is checked above")
 
 
     # ---
@@ -237,8 +237,8 @@ class TreeGen(bpy.types.Operator):
                 callback_queue.put(bpy.ops.object.tree_gen_create_lods)
 
             # Tree is converted to mesh via LOD generation, so this needs to be secondary
-            elif scene.tree_gen_convert_to_mesh_input:
-                bpy.ops.object.tree_gen_convert_to_mesh()
+            if scene.tree_gen_convert_to_mesh_input:
+                callback_queue.put(bpy.ops.object.tree_gen_convert_to_mesh)
 
             success = True
 

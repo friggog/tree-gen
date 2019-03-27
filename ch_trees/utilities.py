@@ -2,6 +2,7 @@ import bpy
 import bmesh
 import mathutils
 
+import random
 import sys
 import threading
 import time
@@ -79,6 +80,9 @@ def convert_to_mesh(context):
     if old_branches is None:
         raise Exception('No branches found while converting to mesh')
 
+    old_branch_name = old_branches.name
+    old_mesh_name = old_branches.data.name
+
     # Convert the branches curve to a mesh, then get an editable copy
     old_branch_mesh = old_branches.to_mesh(scene, False, 'RENDER')
     br_bmesh = bmesh.new()
@@ -96,7 +100,7 @@ def convert_to_mesh(context):
     del old_branches
 
     # Create a new mesh and container object
-    new_branches = bpy.data.objects.new('Branches', bpy.data.meshes.new('branches'))
+    new_branches = bpy.data.objects.new(old_branch_name, bpy.data.meshes.new(old_mesh_name))
     br_bmesh.to_mesh(new_branches.data)
 
     # Purge bmesh from memory
@@ -124,6 +128,7 @@ def generate_lods(context, level_count=3):
         if child.name.startswith('Branches'):
             base_name = child.name
             child.name = child.name + '_LOD0'
+            child.data.name = child.data.name + '_LOD0'
             original = child
             parent = child.parent
             break
@@ -133,7 +138,7 @@ def generate_lods(context, level_count=3):
 
     resolutions = [3, 2, 1]
     dissolve_ratios = [.9, .7, .5]
-    for level in range(0, level_count):
+    for level in range(level_count):
         lod_level_name = '_LOD' + str(level + 1)
 
         # Create copy of curve
@@ -171,6 +176,8 @@ def generate_lods(context, level_count=3):
         bpy.context.scene.objects.active = new_branches
 
         bpy.ops.object.modifier_apply(modifier='TreeDecimateMod')
+        new_branches.select = True
+        new_branches.hide = True
 
         # Purge old data from memory
         bpy.data.curves.remove(new_curve.data)
@@ -178,7 +185,80 @@ def generate_lods(context, level_count=3):
             bpy.data.objects.remove(new_curve, True)
         del new_curve
 
-        update_log('\rLOD level ' + str(level + 1) + '/' + str(level_count) + ' generated')
+        bpy.context.scene.objects.active = tree
+        # scene.objects.active = parent
+
+        update_log('\rBranch LOD level ' + str(level + 1) + '/' + str(level_count) + ' generated')
+
+    update_log('\n')
+
+    _generate_leaf_lods(context, level_count)
+
+    update_log('\n')
+
+
+def _generate_leaf_lods(context, level_count=3):
+    from ch_trees import parametric
+    update_log = parametric.gen.update_log
+
+    scene = context.scene
+    tree = scene.objects.active
+
+    original = None
+    for child in tree.children:
+        if child.name.startswith('Leaves'):
+            base_name = child.name
+            child.name = child.name + '_LOD0'
+            original = child
+            parent = child.parent
+            break
+
+    if original is None:
+        raise Exception('No leaves found while attempting to generate LODs')
+
+    leaf_count = len(original.data.polygons)
+    lod_reduce_amounts = [.9, .6, .4]
+    lod_leaf_counts = [round(leaf_count * lod_reduce_amounts[0]),
+                       round(leaf_count * lod_reduce_amounts[1]),
+                       round(leaf_count * lod_reduce_amounts[2])]
+
+    for level in range(level_count):
+        new_leaf_data = bmesh.new()
+        new_leaf_data.from_mesh(original.data)
+        new_leaf_count = lod_leaf_counts[level]
+
+        # Delete faces
+        if new_leaf_count > 8:  # Prevent infinite loops
+            amount_to_delete = leaf_count - new_leaf_count
+            indexes_to_delete = set(random.randint(0, leaf_count - 1) for _ in range(amount_to_delete))
+            while len(indexes_to_delete) < amount_to_delete:
+                indexes_to_delete.add(random.randint(0, leaf_count - 1))
+
+            new_leaf_data.faces.ensure_lookup_table()
+            to_delete = [new_leaf_data.faces[i] for i in indexes_to_delete]
+
+            bmesh.ops.delete(new_leaf_data, geom=list(to_delete), context=5)  # 5 = delete verts, edges, and face
+
+        # Create new leaves object and copy the new leaves data into it
+        lod_level_name = '_LOD' + str(level + 1)    
+        new_leaves = bpy.data.objects.new(base_name + lod_level_name, bpy.data.meshes.new('leaves' + lod_level_name))
+        new_leaf_data.to_mesh(new_leaves.data)
+
+        # Purge bmesh data from memory
+        new_leaf_data.clear()
+        new_leaf_data.free()
+        del new_leaf_data
+
+        # Add new leaves object to the scene
+        scene.objects.link(new_leaves)
+        new_leaves.matrix_world = parent.matrix_world
+        new_leaves.parent = parent
+
+        new_leaves.hide = True
+
+        update_log('\rLeaf LOD level ' + str(level + 1) + '/' + str(level_count) + ' generated')
+
+    bpy.context.scene.objects.active = tree
 
     update_log('\n')
 
