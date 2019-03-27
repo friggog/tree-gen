@@ -1237,6 +1237,8 @@ def construct(params, seed=0, generate_leaves=True):
     if seed == 0:
         seed = int(random_random() * 9999999)
 
+    update_log('\nUsing seed: {}\n'.format(seed))
+
     random.seed(seed)
 
     t = Tree(TreeParam(params), generate_leaves)
