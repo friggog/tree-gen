@@ -62,6 +62,7 @@ class TreeGen(bpy.types.Operator):
 
     # Nothing exciting here. Seed and leaf toggle
     _scene.seed_input = _props.IntProperty(name="", default=0, min=0, max=9999999)
+    _scene.last_seed = _props.IntProperty(name="", default=0, min=0, max=9999999)
     _scene.generate_leaves_input = _props.BoolProperty(name="Generate Leaves/Blossom", default=True)
 
     # ======================
@@ -186,7 +187,6 @@ class TreeGen(bpy.types.Operator):
     # Create LODs
     _scene.tree_gen_create_lods_input = _props.BoolProperty(name="Create LODs After Generation", default=False,
                                                             description="After generation, create three copies of the tree (meshes) of decreasing quality. The original tree curve will be preserved, but can be converted using the 'Convert To Mesh' button.")
-
 
     # ---
     def execute(self, context):
@@ -627,7 +627,14 @@ class TreeGenPanel(bpy.types.Panel):
         box = layout.box()
         box.row()
         label_row('Seed', 'seed_input', container=box)
-        box.row()
+        row = box.row()
+        if scene.seed_input == 0:
+            if scene.last_seed != 0:
+                row.label(text='Last seed: ' + str(scene.last_seed))
+                box.row()
+            else:
+                row.label(text='0 = random')
+                box.row()
         box.operator(TreeGen.bl_idname)
         box.row()
 
@@ -644,7 +651,6 @@ class TreeGenUtilitiesPanel(bpy.types.Panel):
     bl_category = 'TreeGen'
     bl_context = (("objectmode"))
     bl_options = {'DEFAULT_CLOSED'}
-
 
     def draw(self, context):
         layout = self.layout

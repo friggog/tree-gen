@@ -16,7 +16,6 @@ from random import uniform as random_uniform
 # blender imports
 import bpy
 from enum import Enum
-import mathutils
 from mathutils import Quaternion
 
 from ch_trees import utilities
@@ -1236,6 +1235,7 @@ def construct(params, seed=0, generate_leaves=True):
 
     if seed == 0:
         seed = int(random_random() * 9999999)
+        bpy.context.scene.last_seed = seed
 
     update_log('\nUsing seed: {}\n'.format(seed))
 
@@ -1248,4 +1248,3 @@ def construct(params, seed=0, generate_leaves=True):
     del t.leaves_array
     del t.branches_curve
     del t
-
