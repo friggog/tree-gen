@@ -4,7 +4,8 @@ bl_info = {
     "description": "Generate high quality tree models",
     "author": "Charlie Hewitt and Luke Pflibsen-Jones",
     "version": (0, 0, 1),
-    "wiki_url": "",
+    "wiki_url": "https://github.com/friggog/tree-gen/wiki",
+    'blender': (2, 70, 0)
 }
 
 
