@@ -5,7 +5,7 @@ bl_info = {
     "author": "Charlie Hewitt and Luke Pflibsen-Jones",
     "version": (0, 0, 1),
     "wiki_url": "https://github.com/friggog/tree-gen/wiki",
-    'blender': (2, 70, 0)
+    'blender': (2, 80, 0)
 }
 
 
