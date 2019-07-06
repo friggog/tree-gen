@@ -64,7 +64,7 @@ def convert_to_mesh(context):
     Converts tree branches from curve to mesh
     """
 
-    scene = context.scene
+    scene = context.view_layer
 
     try:
         tree = scene.objects.active
@@ -116,7 +116,7 @@ def generate_lods(context, level_count=3):
     from ch_trees import parametric
     update_log = parametric.gen.update_log
 
-    scene = context.scene
+    scene = context.view_layer
 
     try:
         tree = scene.objects.active
@@ -148,7 +148,7 @@ def generate_lods(context, level_count=3):
 
         # Set the resolution of the new curve and convert to mesh
         new_curve.data.resolution_u = resolutions[level]
-        temp_mesh = new_curve.to_mesh(bpy.context.scene, settings='RENDER', apply_modifiers=False)
+        temp_mesh = new_curve.to_mesh(bpy.context.view_layer, settings='RENDER', apply_modifiers=False)
         curve_bmesh.from_mesh(temp_mesh)
 
         # Purge temp mesh from memory
@@ -173,7 +173,7 @@ def generate_lods(context, level_count=3):
         # Select new branches and make them the active object
         bpy.ops.object.select_all(action='DESELECT')
         new_branches.select = True
-        bpy.context.scene.objects.active = new_branches
+        bpy.context.view_layer.objects.active = new_branches
 
         bpy.ops.object.modifier_apply(modifier='TreeDecimateMod')
         new_branches.select = True
@@ -185,7 +185,7 @@ def generate_lods(context, level_count=3):
             bpy.data.objects.remove(new_curve, True)
         del new_curve
 
-        bpy.context.scene.objects.active = tree
+        bpy.context.view_layer.objects.active = tree
         # scene.objects.active = parent
 
         update_log('\rBranch LOD level ' + str(level + 1) + '/' + str(level_count) + ' generated')
@@ -201,7 +201,7 @@ def _generate_leaf_lods(context, level_count=3):
     from ch_trees import parametric
     update_log = parametric.gen.update_log
 
-    scene = context.scene
+    scene = context.view_layer
     tree = scene.objects.active
 
     original = None
@@ -258,7 +258,7 @@ def _generate_leaf_lods(context, level_count=3):
 
         update_log('\rLeaf LOD level ' + str(level + 1) + '/' + str(level_count) + ' generated')
 
-    bpy.context.scene.objects.active = tree
+    bpy.context.view_layer.objects.active = tree
 
     update_log('\n')
 
@@ -273,7 +273,7 @@ def render_tree(output_path):
 
     targets = None
     for obj in context.scene.objects:
-        obj.select = False
+        bpy.context.active_object.select_set(state=False)
         targets = [obj] + [child for child in obj.children] if obj.name.startswith('Tree') else targets
 
     if targets is None:
@@ -281,7 +281,7 @@ def render_tree(output_path):
         return
 
     for target in targets:
-        target.select = True
+       target.select_set(state=True)
 
     bpy.ops.view3d.camera_to_view_selected()
 
