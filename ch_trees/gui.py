@@ -454,7 +454,7 @@ class TreeGenMainThreadExecuter(bpy.types.Operator):
     def execute(self, context):
         context.window_manager.modal_handler_add(self)
         self._updating = False
-        self._timer = context.window_manager.event_timer_add(0.5, context.window)
+        self._timer = context.window_manager.event_timer_add(0.5, window=context.window)
 
         return {'RUNNING_MODAL'}
 
@@ -473,9 +473,9 @@ class TreeGenCustomisePanel(bpy.types.Panel):
     bl_label = "TreeGen Customisation"
     bl_idname = "OBJECT_PT_treegen_c"
     bl_space_type = 'VIEW_3D'
-    bl_region_type = 'TOOLS'
+    bl_region_type = 'UI'
     bl_category = 'TreeGen'
-    bl_context = (("objectmode"))
+    bl_context = "objectmode"
     bl_options = {'DEFAULT_CLOSED'}
 
     def draw(self, context):
@@ -488,7 +488,7 @@ class TreeGenCustomisePanel(bpy.types.Panel):
                 container = layout
             if dropdown:
                 col = container.column()
-                cont = col.split(percentage=.5, align=True)
+                cont = col.split(factor=0.5, align=True)
                 cont.label(text=label + ':')
             else:
                 cont = container.row()
@@ -499,7 +499,7 @@ class TreeGenCustomisePanel(bpy.types.Panel):
                 cont.prop(scene, prop, text=label)
 
         row = layout.row()
-        row.label('Leaf Parameters:')
+        row.label(text = "Leaf Parameters:")
         box = layout.box()
         box.row()
         label_row('', 'generate_leaves_input', checkbox=True, container=box)
@@ -517,7 +517,7 @@ class TreeGenCustomisePanel(bpy.types.Panel):
 
         layout.separator()
         row = layout.row()
-        row.label('Tree Parameters:')
+        row.label(text = "Tree Parameters:")
         box = layout.box()
         box.row()
         label_row('Tree Shape', 'tree_shape_input', dropdown=True, container=box)
@@ -544,7 +544,7 @@ class TreeGenCustomisePanel(bpy.types.Panel):
 
         layout.separator()
         row = layout.row()
-        row.label('Branch Parameters:')
+        row.label(text = "Branch Parameters:")
         box = layout.box()
         box.row()
         label_row('Number', 'tree_branches_input', container=box)
@@ -589,9 +589,9 @@ class TreeGenPanel(bpy.types.Panel):
     bl_label = "TreeGen"
     bl_idname = "OBJECT_PT_treegen"
     bl_space_type = 'VIEW_3D'
-    bl_region_type = 'TOOLS'
+    bl_region_type = 'UI'
     bl_category = 'TreeGen'
-    bl_context = (("objectmode"))
+    bl_context = "objectmode"
 
     def draw(self, context):
         layout = self.layout
@@ -605,7 +605,7 @@ class TreeGenPanel(bpy.types.Panel):
 
             if dropdown:
                 col = container.column()
-                cont = col.split(percentage=.5, align=True)
+                cont = col.split(factor=0.5, align=True)
                 cont.label(text=label)
             else:
                 cont = container.row()
@@ -647,9 +647,9 @@ class TreeGenUtilitiesPanel(bpy.types.Panel):
     bl_label = "TreeGen Utilities"
     bl_idname = "OBJECT_PT_treegen_utilities"
     bl_space_type = 'VIEW_3D'
-    bl_region_type = 'TOOLS'
+    bl_region_type = 'UI'
     bl_category = 'TreeGen'
-    bl_context = (("objectmode"))
+    bl_context = "objectmode"
     bl_options = {'DEFAULT_CLOSED'}
 
     def draw(self, context):
@@ -664,7 +664,7 @@ class TreeGenUtilitiesPanel(bpy.types.Panel):
 
             if dropdown:
                 col = container.column()
-                cont = col.split(percentage=.5, align=True)
+                cont = col.split(factor=0.5, align=True)
                 cont.label(text=label)
             else:
                 cont = container.row()
@@ -677,7 +677,7 @@ class TreeGenUtilitiesPanel(bpy.types.Panel):
         box = layout.box()
         box.row()
         label_row('', 'render_input', checkbox=True, container=box)
-        label_row('Filepath:', 'render_output_path_input', container=box)
+        label_row('Filepath', 'render_output_path_input', container=box)
         box.row()
         box.operator(TreeGenRender.bl_idname)
         box.row()
