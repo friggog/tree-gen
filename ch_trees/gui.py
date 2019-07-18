@@ -499,7 +499,7 @@ class TreeGenCustomisePanel(bpy.types.Panel):
                 cont.prop(scene, prop, text=label)
 
         row = layout.row()
-        row.label(text = "Leaf Parameters:")
+        row.label(text="Leaf Parameters:")
         box = layout.box()
         box.row()
         label_row('', 'generate_leaves_input', checkbox=True, container=box)
@@ -517,7 +517,7 @@ class TreeGenCustomisePanel(bpy.types.Panel):
 
         layout.separator()
         row = layout.row()
-        row.label(text = "Tree Parameters:")
+        row.label(text="Tree Parameters:")
         box = layout.box()
         box.row()
         label_row('Tree Shape', 'tree_shape_input', dropdown=True, container=box)
@@ -544,7 +544,7 @@ class TreeGenCustomisePanel(bpy.types.Panel):
 
         layout.separator()
         row = layout.row()
-        row.label(text = "Branch Parameters:")
+        row.label(text="Branch Parameters:")
         box = layout.box()
         box.row()
         label_row('Number', 'tree_branches_input', container=box)

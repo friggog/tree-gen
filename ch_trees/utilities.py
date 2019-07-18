@@ -30,6 +30,8 @@ class _LogThread(threading.Thread):
 
 thread_queue = None
 log_thread = None
+
+
 def get_logger(logging):
     global log_thread, thread_queue
 
@@ -64,10 +66,8 @@ def convert_to_mesh(context):
     Converts tree branches from curve to mesh
     """
 
-    scene = context.view_layer
-
     try:
-        tree = scene.objects.active
+        tree = context.object
     except AttributeError:
         raise Exception('Could not find tree while attempting to convert to mesh')
 
@@ -84,12 +84,12 @@ def convert_to_mesh(context):
     old_mesh_name = old_branches.data.name
 
     # Convert the branches curve to a mesh, then get an editable copy
-    old_branch_mesh = old_branches.to_mesh(scene, False, 'RENDER')
+    old_branch_mesh = old_branches.to_mesh()
     br_bmesh = bmesh.new()
     br_bmesh.from_mesh(old_branch_mesh)
 
     # Purge old branch data from memory
-    bpy.data.meshes.remove(old_branch_mesh)
+    # bpy.data.meshes.remove(old_branch_mesh)
     del old_branch_mesh
 
     bpy.data.curves.remove(old_branches.data)
@@ -107,7 +107,7 @@ def convert_to_mesh(context):
     br_bmesh.free()
 
     # Make the mesh active in the scene, then associate it with the tree
-    scene.objects.link(new_branches)
+    context.collection.objects.link(new_branches)
     new_branches.matrix_world = tree.matrix_world
     new_branches.parent = tree
 
@@ -116,10 +116,8 @@ def generate_lods(context, level_count=3):
     from ch_trees import parametric
     update_log = parametric.gen.update_log
 
-    scene = context.view_layer
-
     try:
-        tree = scene.objects.active
+        tree = context.object
     except AttributeError:
         raise Exception('Could not find tree while attempting to generate LODs')
 
@@ -148,11 +146,11 @@ def generate_lods(context, level_count=3):
 
         # Set the resolution of the new curve and convert to mesh
         new_curve.data.resolution_u = resolutions[level]
-        temp_mesh = new_curve.to_mesh(bpy.context.view_layer, settings='RENDER', apply_modifiers=False)
+        temp_mesh = new_curve.to_mesh()
         curve_bmesh.from_mesh(temp_mesh)
 
         # Purge temp mesh from memory
-        bpy.data.meshes.remove(temp_mesh)
+        # bpy.data.meshes.remove(temp_mesh)
         del temp_mesh
 
         # Create a new object, copy data from curve_bmesh into it, and purge bmesh from memory
@@ -166,14 +164,14 @@ def generate_lods(context, level_count=3):
         modifier.ratio = dissolve_ratios[level]
 
         # Make the mesh active in the scene, then associate it with the tree
-        scene.objects.link(new_branches)
+        context.collection.objects.link(new_branches)
         new_branches.matrix_world = parent.matrix_world
         new_branches.parent = parent
 
         # Select new branches and make them the active object
         bpy.ops.object.select_all(action='DESELECT')
         new_branches.select = True
-        bpy.context.view_layer.objects.active = new_branches
+        context.object = new_branches
 
         bpy.ops.object.modifier_apply(modifier='TreeDecimateMod')
         new_branches.select = True
@@ -185,8 +183,7 @@ def generate_lods(context, level_count=3):
             bpy.data.objects.remove(new_curve, True)
         del new_curve
 
-        bpy.context.view_layer.objects.active = tree
-        # scene.objects.active = parent
+        context.object = tree
 
         update_log('\rBranch LOD level ' + str(level + 1) + '/' + str(level_count) + ' generated')
 
@@ -201,8 +198,7 @@ def _generate_leaf_lods(context, level_count=3):
     from ch_trees import parametric
     update_log = parametric.gen.update_log
 
-    scene = context.view_layer
-    tree = scene.objects.active
+    tree = context.object
 
     original = None
     for child in tree.children:
@@ -240,9 +236,9 @@ def _generate_leaf_lods(context, level_count=3):
             bmesh.ops.delete(new_leaf_data, geom=list(to_delete), context=5)  # 5 = delete verts, edges, and face
 
         # Create new leaves object and copy the new leaves data into it
-        lod_level_name = '_LOD' + str(level + 1)    
+        lod_level_name = '_LOD' + str(level + 1)
         new_leaves = bpy.data.objects.new(base_name + lod_level_name, bpy.data.meshes.new('leaves' + lod_level_name))
-        new_leaf_data.to_mesh(new_leaves.data)
+        new_leaf_data.to_mesh()
 
         # Purge bmesh data from memory
         new_leaf_data.clear()
@@ -250,7 +246,7 @@ def _generate_leaf_lods(context, level_count=3):
         del new_leaf_data
 
         # Add new leaves object to the scene
-        scene.objects.link(new_leaves)
+        context.collection.objects.link(new_leaves)
         new_leaves.matrix_world = parent.matrix_world
         new_leaves.parent = parent
 
@@ -258,7 +254,7 @@ def _generate_leaf_lods(context, level_count=3):
 
         update_log('\rLeaf LOD level ' + str(level + 1) + '/' + str(level_count) + ' generated')
 
-    bpy.context.view_layer.objects.active = tree
+    context.object = tree
 
     update_log('\n')
 
@@ -269,10 +265,8 @@ def render_tree(output_path):
 
     update_log('\nRendering Scene\n')
 
-    context = bpy.context
-
     targets = None
-    for obj in context.scene.objects:
+    for obj in bpy.context.scene.objects:
         bpy.context.active_object.select_set(state=False)
         targets = [obj] + [child for child in obj.children] if obj.name.startswith('Tree') else targets
 
@@ -281,14 +275,14 @@ def render_tree(output_path):
         return
 
     for target in targets:
-       target.select_set(state=True)
+        target.select_set(state=True)
 
     bpy.ops.view3d.camera_to_view_selected()
 
     time.sleep(.2)
 
     try:
-        camera = bpy.data.objects["Camera"]
+        camera = bpy.context.scene.camera
     except KeyError:
         print('Could not find camera to capture with')
         return
@@ -297,7 +291,7 @@ def render_tree(output_path):
     inv.invert()
 
     vec = mathutils.Vector((0.0, 0, 1.0))  # move camera back a bit
-    vec_rot = vec * inv  # vec aligned to local axis
+    vec_rot = vec @ inv  # vec aligned to local axis
     camera.location = camera.location + vec_rot
 
     bpy.data.scenes['Scene'].render.filepath = output_path

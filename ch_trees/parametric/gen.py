@@ -321,7 +321,7 @@ class Tree(object):
             leaf_uv = base_leaf_shape[2]
 
             if leaf_uv:
-                leaves.uv_textures.new("leavesUV")
+                leaves.uv_layers.new(name="leavesUV")
                 uv_layer = leaves.uv_layers.active.data
 
                 for seg_ind in range(int(len(leaf_faces) / len(base_leaf_shape[1]))):
