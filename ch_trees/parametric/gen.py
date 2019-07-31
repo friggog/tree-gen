@@ -1244,7 +1244,11 @@ def construct(params, seed=0, generate_leaves=True):
     t = Tree(TreeParam(params), generate_leaves)
     t.make()
 
+    ret_obj = t.tree_obj
+
     # Try to get unneeded data out of memory ASAP
     del t.leaves_array
     del t.branches_curve
     del t
+
+    return ret_obj
