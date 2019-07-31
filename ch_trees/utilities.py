@@ -89,15 +89,12 @@ def convert_to_mesh(context):
     br_bmesh.from_mesh(old_branch_mesh)
 
     # Purge old branch data from memory
-    # bpy.data.meshes.remove(old_branch_mesh)
-    del old_branch_mesh
+    old_branches.to_mesh_clear()
 
     bpy.data.curves.remove(old_branches.data)
 
     if not object_deleted(old_branches):
         bpy.data.objects.remove(old_branches, True)
-
-    del old_branches
 
     # Create a new mesh and container object
     new_branches = bpy.data.objects.new(old_branch_name, bpy.data.meshes.new(old_mesh_name))
@@ -148,15 +145,11 @@ def generate_lods(context, level_count=3):
         new_curve.data.resolution_u = resolutions[level]
         temp_mesh = new_curve.to_mesh()
         curve_bmesh.from_mesh(temp_mesh)
-
-        # Purge temp mesh from memory
-        # bpy.data.meshes.remove(temp_mesh)
-        del temp_mesh
+        new_curve.to_mesh_clear()
 
         # Create a new object, copy data from curve_bmesh into it, and purge bmesh from memory
         new_branches = bpy.data.objects.new(base_name + lod_level_name, bpy.data.meshes.new('branches' + lod_level_name))
         curve_bmesh.to_mesh(new_branches.data)
-        curve_bmesh.clear()
         curve_bmesh.free()
 
         # Decimate
@@ -170,26 +163,27 @@ def generate_lods(context, level_count=3):
 
         # Select new branches and make them the active object
         bpy.ops.object.select_all(action='DESELECT')
-        new_branches.select = True
-        context.object = new_branches
+        new_branches.select_set(True)
+        context.view_layer.objects.active = new_branches
 
         bpy.ops.object.modifier_apply(modifier='TreeDecimateMod')
-        new_branches.select = True
-        new_branches.hide = True
+        new_branches.select_set(True)
+        new_branches.hide_viewport = True
 
         # Purge old data from memory
         bpy.data.curves.remove(new_curve.data)
         if not object_deleted(new_curve):
             bpy.data.objects.remove(new_curve, True)
-        del new_curve
 
-        context.object = tree
+        context.view_layer.objects.active = tree
 
         update_log('\rBranch LOD level ' + str(level + 1) + '/' + str(level_count) + ' generated')
 
     update_log('\n')
 
     _generate_leaf_lods(context, level_count)
+
+    context.view_layer.update()
 
     update_log('\n')
 
@@ -233,28 +227,23 @@ def _generate_leaf_lods(context, level_count=3):
             new_leaf_data.faces.ensure_lookup_table()
             to_delete = [new_leaf_data.faces[i] for i in indexes_to_delete]
 
-            bmesh.ops.delete(new_leaf_data, geom=list(to_delete), context=5)  # 5 = delete verts, edges, and face
+            bmesh.ops.delete(new_leaf_data, geom=list(to_delete))
 
         # Create new leaves object and copy the new leaves data into it
         lod_level_name = '_LOD' + str(level + 1)
         new_leaves = bpy.data.objects.new(base_name + lod_level_name, bpy.data.meshes.new('leaves' + lod_level_name))
-        new_leaf_data.to_mesh()
-
-        # Purge bmesh data from memory
-        new_leaf_data.clear()
+        new_leaf_data.to_mesh(new_leaves.data)
         new_leaf_data.free()
-        del new_leaf_data
 
         # Add new leaves object to the scene
         context.collection.objects.link(new_leaves)
         new_leaves.matrix_world = parent.matrix_world
         new_leaves.parent = parent
-
-        new_leaves.hide = True
+        new_leaves.hide_viewport = True
 
         update_log('\rLeaf LOD level ' + str(level + 1) + '/' + str(level_count) + ' generated')
 
-    context.object = tree
+    context.view_layer.objects.active = tree
 
     update_log('\n')
 
