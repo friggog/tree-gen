@@ -168,7 +168,7 @@ def generate_lods(context, level_count=3):
 
         bpy.ops.object.modifier_apply(modifier='TreeDecimateMod')
         new_branches.select_set(True)
-        new_branches.hide_viewport = True
+        new_branches.hide_set(True)
 
         # Purge old data from memory
         bpy.data.curves.remove(new_curve.data)
@@ -227,7 +227,7 @@ def _generate_leaf_lods(context, level_count=3):
             new_leaf_data.faces.ensure_lookup_table()
             to_delete = [new_leaf_data.faces[i] for i in indexes_to_delete]
 
-            bmesh.ops.delete(new_leaf_data, geom=list(to_delete))
+            bmesh.ops.delete(new_leaf_data, geom=list(to_delete), context='FACES')
 
         # Create new leaves object and copy the new leaves data into it
         lod_level_name = '_LOD' + str(level + 1)
@@ -239,7 +239,7 @@ def _generate_leaf_lods(context, level_count=3):
         context.collection.objects.link(new_leaves)
         new_leaves.matrix_world = parent.matrix_world
         new_leaves.parent = parent
-        new_leaves.hide_viewport = True
+        new_leaves.hide_set(True)
 
         update_log('\rLeaf LOD level ' + str(level + 1) + '/' + str(level_count) + ' generated')
 
