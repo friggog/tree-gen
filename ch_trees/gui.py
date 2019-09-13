@@ -1,7 +1,6 @@
 import bpy
 
 import traceback
-import threading
 import sys
 import importlib
 import os
@@ -196,7 +195,7 @@ class TreeGen(bpy.types.Operator):
         bpy.ops.object.treegen_main_thread_executer()
 
         params = TreeGen.get_params_from_customizer(context)
-        threading.Thread(daemon=True, target=self._construct, kwargs={'context': context, 'params': params, 'callback_queue': main_thread_callback_queue}).start()
+        self._construct(context, params, main_thread_callback_queue)
 
         return {'FINISHED'}
 
@@ -422,7 +421,7 @@ class TreeGenLoadParams(bpy.types.Operator):
 
 class TreeGenMainThreadExecuter(bpy.types.Operator):
     # Internal utility that handles executing tasks on the main thread.
-    # Necessary LOD creation
+    # Necessary for LOD creation
 
     bl_idname = 'object.treegen_main_thread_executer'
     bl_label = 'TreeGen internal executer utility'
