@@ -173,8 +173,8 @@ class Tree(object):
 
         # create parent object
         self.tree_obj = bpy.data.objects.new('Tree', None)
-        bpy.context.scene.objects.link(self.tree_obj)
-        bpy.context.scene.objects.active = self.tree_obj
+        bpy.context.collection.objects.link(self.tree_obj)
+        bpy.context.view_layer.objects.active = self.tree_obj
 
         # create branches
         self.create_branches()
@@ -227,7 +227,7 @@ class Tree(object):
         self.branches_curve.bevel_resolution = 10
         self.branches_curve.use_uv_as_generated = True
         branches_obj = bpy.data.objects.new('Branches', self.branches_curve)
-        bpy.context.scene.objects.link(branches_obj)
+        bpy.context.collection.objects.link(branches_obj)
         branches_obj.parent = self.tree_obj
 
         # actually make the branches
@@ -314,14 +314,14 @@ class Tree(object):
         if leaf_index > 0:
             leaves = bpy.data.meshes.new('leaves')
             leaves_obj = bpy.data.objects.new('Leaves', leaves)
-            bpy.context.scene.objects.link(leaves_obj)
+            bpy.context.collection.objects.link(leaves_obj)
             leaves_obj.parent = self.tree_obj
             leaves.from_pydata(leaf_verts, (), leaf_faces)
             # set up UVs for leaf polygons
             leaf_uv = base_leaf_shape[2]
 
             if leaf_uv:
-                leaves.uv_textures.new("leavesUV")
+                leaves.uv_layers.new(name="leavesUV")
                 uv_layer = leaves.uv_layers.active.data
 
                 for seg_ind in range(int(len(leaf_faces) / len(base_leaf_shape[1]))):
@@ -334,7 +334,7 @@ class Tree(object):
         if blossom_index > 0:
             blossom = bpy.data.meshes.new('blossom')
             blossom_obj = bpy.data.objects.new('Blossom', blossom)
-            bpy.context.scene.objects.link(blossom_obj)
+            bpy.context.collection.objects.link(blossom_obj)
             blossom_obj.parent = self.tree_obj
             blossom.from_pydata(blossom_verts, (), blossom_faces)
             # blossom.validate()
@@ -495,7 +495,7 @@ class Tree(object):
                     new_point.handle_left = pos.copy()
 
                 else:
-                    stem.curve.bezier_points.add()
+                    stem.curve.bezier_points.add(1)
                     new_point = stem.curve.bezier_points[-1]
 
                     if seg_ind == 1:
@@ -521,7 +521,7 @@ class Tree(object):
                     new_point = stem.curve.bezier_points[0]
                 else:
                     turtle.move(seg_length)
-                    stem.curve.bezier_points.add()
+                    stem.curve.bezier_points.add(1)
                     new_point = stem.curve.bezier_points[-1]
 
                 # set position and handles of new point
@@ -1147,7 +1147,7 @@ class Tree(object):
                 if k == 1:
                     curr_point = seg_end_point
                 else:
-                    stem.curve.bezier_points.add()
+                    stem.curve.bezier_points.add(1)
                     curr_point = stem.curve.bezier_points[-1]
                 if k == points_per_seg - 1:
                     curr_point.co = end_point.co
@@ -1244,7 +1244,11 @@ def construct(params, seed=0, generate_leaves=True):
     t = Tree(TreeParam(params), generate_leaves)
     t.make()
 
+    ret_obj = t.tree_obj
+
     # Try to get unneeded data out of memory ASAP
     del t.leaves_array
     del t.branches_curve
     del t
+
+    return ret_obj
