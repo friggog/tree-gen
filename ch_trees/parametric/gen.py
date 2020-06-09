@@ -225,7 +225,11 @@ class Tree(object):
         self.branches_curve.fill_mode = 'FULL'
         self.branches_curve.bevel_depth = 1
         self.branches_curve.bevel_resolution = 10
-        self.branches_curve.use_uv_as_generated = True
+
+        # Removed in Blender 2.82+
+        if hasattr(self.branches_curve, 'use_uv_as_generated'):
+            self.branches_curve.use_uv_as_generated = True
+
         branches_obj = bpy.data.objects.new('Branches', self.branches_curve)
         bpy.context.collection.objects.link(branches_obj)
         branches_obj.parent = self.tree_obj
