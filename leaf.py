@@ -5,7 +5,7 @@ from math import atan2, pi
 from .chturtle import Vector
 from mathutils import Quaternion
 
-import leaf_shapes as leaf_geom
+from .  import leaf_shapes as leaf_geom
 
 
 class Leaf(object):

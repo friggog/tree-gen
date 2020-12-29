@@ -3,8 +3,9 @@ bl_info = {
     "category": "Object",
     "description": "Generate high quality tree models",
     "author": "Charlie Hewitt and Luke Pflibsen-Jones",
-    "version": (0, 0, 1),
+    "version": (0, 0, 2),
     "wiki_url": "https://github.com/friggog/tree-gen/wiki",
+    "tracker_url": "https://github.com/friggog/tree-gen/issues/new/choose",
     'blender': (2, 80, 0)
 }
 

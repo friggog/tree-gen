@@ -110,7 +110,7 @@ def convert_to_mesh(context):
 
 
 def generate_lods(context, level_count=3):
-    from ch_trees import parametric
+    from . import parametric
     update_log = parametric.gen.update_log
 
     try:
@@ -189,7 +189,7 @@ def generate_lods(context, level_count=3):
 
 
 def _generate_leaf_lods(context, level_count=3):
-    from ch_trees import parametric
+    from . import parametric
     update_log = parametric.gen.update_log
 
     tree = context.object
@@ -249,7 +249,7 @@ def _generate_leaf_lods(context, level_count=3):
 
 
 def render_tree(output_path):
-    from ch_trees import parametric
+    from . import parametric
     update_log = parametric.gen.update_log
 
     update_log('\nRendering Scene\n')
