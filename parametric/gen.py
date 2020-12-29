@@ -18,10 +18,10 @@ import bpy
 from enum import Enum
 from mathutils import Quaternion
 
-from ch_trees import utilities
-from ch_trees.chturtle import Vector, CHTurtle
-from ch_trees.leaf import Leaf
-from ch_trees.parametric.tree_params.tree_param import TreeParam
+from .. import utilities
+from ..chturtle import Vector, CHTurtle
+from ..leaf import Leaf
+from .tree_params.tree_param import TreeParam
 
 __console_logging__ = True
 windman = bpy.context.window_manager

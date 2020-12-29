@@ -9,8 +9,8 @@ import pprint
 import queue
 from copy import deepcopy
 
-from ch_trees import parametric, utilities
-from ch_trees.parametric.tree_params import tree_param
+from . import parametric, utilities
+from .parametric.tree_params import tree_param
 
 
 update_log = parametric.gen.update_log

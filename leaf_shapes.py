@@ -1,6 +1,6 @@
 """Pre-defined geometries for leaf and blossom meshes"""
 
-from ch_trees.chturtle import Vector
+from .chturtle import Vector
 
 # these can't be global (static) or the shared instances gets modified by other stuff
 # performing deepcopies is slow and causes other issues
