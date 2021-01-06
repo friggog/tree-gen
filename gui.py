@@ -57,7 +57,10 @@ class TreeGen(bpy.types.Operator):
 
     # Drop-down containing tree options
     parametric_items = _get_tree_types()
-    _scene.custom_tree_load_params_input = _props.EnumProperty(name="", default="tree-gen.parametric.tree_params.quaking_aspen", items=parametric_items)
+    _, addon_name, _ = _get_addon_path_details()
+    _scene.custom_tree_load_params_input = _props.EnumProperty(name="",
+                                                               default="{}.parametric.tree_params.quaking_aspen".format(addon_name),
+                                                               items=parametric_items)
 
     # Nothing exciting here. Seed and leaf toggle
     _scene.seed_input = _props.IntProperty(name="", default=0, min=0, max=9999999)
