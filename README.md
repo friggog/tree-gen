@@ -6,7 +6,7 @@ Blender plugin produced as part of my undergraduate dissertation: [Procedural ge
 
 Thanks to the awesome work of [Luke Pflibsen-Jones](https://github.com/luketimothyjones) you can install the zip through the Blender addon UI (or drop the extracted folder into your blender addons directory) and enable the plugin in user settings to start generating trees - now with a complete customisation UI! 
 
-Download the latest version (for blender 2.8+) [here](https://github.com/friggog/tree-gen/archive/master.zip).
+Download the latest version from [here](https://github.com/friggog/tree-gen/releases).
 
 (WIP) Docmentation is available on the [Wiki](https://github.com/friggog/tree-gen/wiki).
 
