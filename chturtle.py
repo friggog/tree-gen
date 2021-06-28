@@ -31,18 +31,25 @@ class Vector(mathutils.Vector):
 class CHTurtle(object):
     """3D turtle implementation for use in both L-Systems and Parametric tree
     generation schemes"""
-    dir = Vector([0.0, 0.0, 1.0])
-    pos = Vector([0.0, 0.0, 0.0])
-    right = Vector([1.0, 0.0, 0.0])
-    width = 0.0
+
+    __slots__ = (
+        'dir', 'pos', 'right', 'width'
+    )
 
     def __init__(self, other=None):
         """Copy Constructor"""
+
         if other is not None:
             self.dir = other.dir.copy()
             self.pos = other.pos.copy()
             self.right = other.right.copy()
             self.width = other.width
+
+        else:
+            self.dir = Vector([0.0, 0.0, 1.0])
+            self.pos = Vector([0.0, 0.0, 0.0])
+            self.right = Vector([1.0, 0.0, 0.0])
+            self.width = 0.0
 
     def __str__(self):
         return 'Turtle at %s, direction %s, right %s' % (self.pos, self.dir, self.right)
