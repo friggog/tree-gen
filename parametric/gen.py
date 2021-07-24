@@ -116,23 +116,25 @@ class BranchMode(Enum):
 class Stem(object):
     """Class to store data for each stem (branch) in the system, primarily to
     be accessed by its children in calculating their own parameters"""
-    depth = 0
-    children = []
-    parent = None
-    curve = None
-    length = 0
-    offset = 0
-    radius = 0
-    length_child_max = 0
-    radius_limit = 0
+
+    __slots__ = (
+        'depth', 'curve', 'parent', 'offset', 'radius_limit', 'children', 'length', 'radius',
+        'length_child_max'
+    )
 
     def __init__(self, depth, curve, parent=None, offset=0, radius_limit=-1):
         """Init with at depth with curve, possibly parent and offset (for depth > 0)"""
+
         self.depth = depth
         self.curve = curve
         self.parent = parent
         self.offset = offset
         self.radius_limit = radius_limit
+
+        self.children = []
+        self.length = 0
+        self.radius = 0
+        self.length_child_max = 0
 
     def copy(self):
         """Copy method for stems"""
@@ -148,21 +150,26 @@ class Stem(object):
 
 class Tree(object):
     """Class to store data for the tree"""
-    tree_scale = 0
-    param = None
-    leaves_array = None
-    branches_curve = None
-    base_length = 0
-    split_num_error = [0, 0, 0, 0, 0, 0, 0]
-    tree_obj = None
-    trunk_length = 0
+
+    __slots__ = (
+        'param', 'generate_leaves', 'leaves_array', 'stem_index', 'tree_scale', 'branches_curve',
+        'base_length', 'split_num_error', 'tree_obj', 'trunk_length'
+    )
 
     def __init__(self, param, generate_leaves=True):
         """initialize tree with specified parameters"""
+
         self.param = param
         self.generate_leaves = generate_leaves
         self.leaves_array = []
+
         self.stem_index = 0
+        self.tree_scale = 0
+        self.branches_curve = None
+        self.base_length = 0
+        self.split_num_error = [0, 0, 0, 0, 0, 0, 0]
+        self.tree_obj = None
+        self.trunk_length = 0
 
         # Disable leaf generation
         if not generate_leaves:

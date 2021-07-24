@@ -10,9 +10,10 @@ from .  import leaf_shapes as leaf_geom
 
 class Leaf(object):
     """Class to store data for each leaf in the system"""
-    position = None
-    direction = None
-    right = None
+
+    __slots__ = (
+        'position', 'direction', 'right'
+    )
 
     def __init__(self, pos, direction, right):
         """Init method for leaf with position, direction and relative x axis"""
