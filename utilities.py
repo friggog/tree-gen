@@ -51,6 +51,9 @@ def get_logger(logging):
 
         return update_log
 
+    def update_log(msg):
+        pass
+
     return lambda _: None
 
 
@@ -65,6 +68,9 @@ def convert_to_mesh(context):
     """
     Converts tree branches from curve to mesh
     """
+
+    from . import parametric
+    update_log = parametric.gen.update_log
 
     try:
         tree = context.object
@@ -107,6 +113,14 @@ def convert_to_mesh(context):
     context.collection.objects.link(new_branches)
     new_branches.matrix_world = tree.matrix_world
     new_branches.parent = tree
+
+    if context.scene.tree_gen_merge_verts_by_distance:
+        update_log('Merging duplicate vertices; this will take a bit for complex trees.\n')
+
+        context.view_layer.objects.active = new_branches
+        bpy.ops.object.mode_set(mode='EDIT', toggle=True)
+        bpy.ops.mesh.select_all(action='SELECT')
+        bpy.ops.mesh.remove_doubles(threshold=0.0001)
 
 
 def generate_lods(context, level_count=3):
