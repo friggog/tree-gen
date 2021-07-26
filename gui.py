@@ -185,6 +185,8 @@ class TreeGen(bpy.types.Operator):
     # Convert selected tree to mesh
     _scene.tree_gen_convert_to_mesh_input = _props.BoolProperty(name="Convert to Mesh After Generation", default=False,
                                                                 description="After generation, automatically convert the branches from a curve to a mesh")
+    _scene.tree_gen_merge_verts_by_distance = _props.BoolProperty(name="Merge Nearby Vertices", default=False,
+                                                                description="After mesh conversion, merge nearby vertices together")
 
     # Create LODs
     _scene.tree_gen_create_lods_input = _props.BoolProperty(name="Create LODs After Generation", default=False,
@@ -693,6 +695,7 @@ class TreeGenUtilitiesPanel(bpy.types.Panel):
         box = layout.box()
         box.row()
         label_row('', 'tree_gen_convert_to_mesh_input', checkbox=True, container=box)
+        label_row('', 'tree_gen_merge_verts_by_distance', checkbox=True, container=box)
         box.row()
         box.operator(TreeGenConvertToMesh.bl_idname)
         box.row()
