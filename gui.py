@@ -10,10 +10,10 @@ import queue
 from copy import deepcopy
 
 from . import parametric, utilities
+from .parametric.gen import update_log
 from .parametric.tree_params import tree_param
 
 
-update_log = parametric.gen.update_log
 main_thread_callback_queue = queue.Queue()
 
 
@@ -252,13 +252,13 @@ class TreeGen(bpy.types.Operator):
 
         # Reduce chance of Blender crashing when generation fails or the user does something ill-advised
         except Exception:
-            sys.stdout.write('\n{}\n'.format(traceback.format_exc()))
-            sys.stdout.write('Tree generation failed\n\n')
-            sys.stdout.flush()
+            update_log('\n{}\n'.format(traceback.format_exc()))
+            update_log('Tree generation failed\n\n')
 
         if success:
-            callback_queue.put('KILL')  # Kill modal used for running tasks in main thread
-            sys.stdout.write('\nTree generated in {:.6f} seconds\n\n'.format(time.time() - start_time))
+            update_log('\nTree generated in {:.6f} seconds\n\n'.format(time.time() - start_time))
+
+        callback_queue.put('KILL')  # Kill modal used for running tasks in main thread
 
     # ----
     @staticmethod
