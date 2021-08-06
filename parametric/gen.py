@@ -843,7 +843,7 @@ class Tree(object):
                 turtle.right.normalize()
 
             # create new clone branch and set up then recurse
-            split_stem = self.branch_curves[stem.depth].splines.new('BEZIER')  # TODO :: Set depth here
+            split_stem = self.branch_curves[stem.depth].splines.new('BEZIER')
             split_stem.resolution_u = stem.curve.resolution_u
             split_stem.radius_interpolation = 'CARDINAL'
             new_stem = stem.copy()
