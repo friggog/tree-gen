@@ -189,8 +189,8 @@ class TreeGen(bpy.types.Operator):
                                                                   description="After mesh conversion, merge nearby vertices together")
 
     # Create LODs
-    _scene.tree_gen_create_lods_input = _props.BoolProperty(name="Create LODs After Generation", default=False,
-                                                            description="After generation, create three copies of the tree (as meshes) of decreasing quality. The original tree curve will stay a curve unless \"Convert to Mesh After Generation\" is checked above")
+    _scene.tree_gen_create_leaf_lods_input = _props.BoolProperty(name="Create Leaf LODs After Generation", default=False,
+                                                                 description="After generation, create three copies of the leaves of increasing sparsity.")
 
     # ---
     def execute(self, context):
@@ -241,8 +241,8 @@ class TreeGen(bpy.types.Operator):
                 callback_queue.put(bpy.ops.object.tree_gen_render_tree)
 
             # This task has to be run on the main thread, so it gets queued instead of called
-            if scene.tree_gen_create_lods_input:
-                callback_queue.put(bpy.ops.object.tree_gen_create_lods)
+            if scene.tree_gen_create_leaf_lods_input:
+                callback_queue.put(bpy.ops.object.tree_gen_create_leaf_lods)
 
             # Tree is converted to mesh via LOD generation, so this needs to be secondary
             if scene.tree_gen_convert_to_mesh_input:
@@ -330,10 +330,10 @@ class TreeGenConvertToMesh(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class TreeGenCreateLODs(bpy.types.Operator):
-    """Generate 3 LODs for the selected tree"""
+class TreeGenCreateLeafLODs(bpy.types.Operator):
+    """Generate 3 leaf LODs for the selected tree"""
 
-    bl_idname = "object.tree_gen_create_lods"
+    bl_idname = "object.tree_gen_create_leaf_lods"
     bl_category = "TreeGen"
     bl_label = "Create LODs"
     bl_options = {'REGISTER'}
@@ -342,18 +342,18 @@ class TreeGenCreateLODs(bpy.types.Operator):
         from . import utilities
 
         # update_log doesn't get a chance to print before Blender locks up, so a direct print is necessary
-        sys.stdout.write('\nCreating LODs. Blender will appear to crash; be patient.\n')
+        sys.stdout.write('\nCreating leaf LODs. Blender will appear to crash; be patient.\n')
         sys.stdout.flush()
 
         # Catch exceptions and print them as strings
         # This will hopefully reduce random crashes
         try:
-            utilities.generate_lods(context, 3)
-            update_log('LOD creation complete\n\n')
+            utilities.generate_leaf_lods(context, 3)
+            update_log('Leaf LOD creation complete\n\n')
 
         except Exception:
             update_log('\n{}\n'.format(traceback.format_exc()))
-            update_log('LOD creation failed\n\n')
+            update_log('Leaf LOD creation failed\n\n')
 
         return {'FINISHED'}
 
@@ -704,9 +704,9 @@ class TreeGenUtilitiesPanel(bpy.types.Panel):
 
         box = layout.box()
         box.row()
-        label_row('', 'tree_gen_create_lods_input', checkbox=True, container=box)
+        label_row('', 'tree_gen_create_leaf_lods_input', checkbox=True, container=box)
         box.row()
-        box.operator(TreeGenCreateLODs.bl_idname)
+        box.operator(TreeGenCreateLeafLODs.bl_idname)
         box.row()
 
         layout.separator()
