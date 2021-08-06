@@ -77,50 +77,51 @@ def convert_to_mesh(context):
     except AttributeError:
         raise Exception('Could not find tree while attempting to convert to mesh')
 
-    old_branches = None
-    for child in tree.children:
-        if child.name.startswith('Branches'):
-            old_branches = child
-            break
+    new_branches = []
+    old_branches = [child for child in tree.children if (child.name.startswith('Trunk') or child.name.startswith('Branches'))
+                                                         and str(type(child.data)) == "<class 'bpy.types.Curve'>"]
 
-    if old_branches is None:
+    if len(old_branches) == 0:
         raise Exception('No branches found while converting to mesh')
 
-    old_branch_name = old_branches.name
-    old_mesh_name = old_branches.data.name
+    for old_branch in old_branches:
+        old_branch_name = old_branch.name
+        old_mesh_name = old_branch.data.name
 
-    # Convert the branches curve to a mesh, then get an editable copy
-    old_branch_mesh = old_branches.to_mesh()
-    br_bmesh = bmesh.new()
-    br_bmesh.from_mesh(old_branch_mesh)
+        # Convert the branches curve to a mesh, then get an editable copy
+        old_branch_mesh = old_branch.to_mesh()
+        br_bmesh = bmesh.new()
+        br_bmesh.from_mesh(old_branch_mesh)
 
-    # Purge old branch data from memory
-    old_branches.to_mesh_clear()
+        # Purge old branch data from memory
+        old_branch.to_mesh_clear()
 
-    bpy.data.curves.remove(old_branches.data)
+        bpy.data.curves.remove(old_branch.data)
 
-    if not object_deleted(old_branches):
-        bpy.data.objects.remove(old_branches, True)
+        if not object_deleted(old_branch):
+            bpy.data.objects.remove(old_branch, True)
 
-    # Create a new mesh and container object
-    new_branches = bpy.data.objects.new(old_branch_name, bpy.data.meshes.new(old_mesh_name))
-    br_bmesh.to_mesh(new_branches.data)
+        # Create a new mesh and container object
+        new_branch = bpy.data.objects.new(old_branch_name, bpy.data.meshes.new(old_mesh_name))
+        br_bmesh.to_mesh(new_branch.data)
 
-    # Purge bmesh from memory
-    br_bmesh.free()
+        # Purge bmesh from memory
+        br_bmesh.free()
 
-    # Make the mesh active in the scene, then associate it with the tree
-    context.collection.objects.link(new_branches)
-    new_branches.matrix_world = tree.matrix_world
-    new_branches.parent = tree
+        # Make the mesh active in the scene, then associate it with the tree
+        context.collection.objects.link(new_branch)
+        new_branch.matrix_world = tree.matrix_world
+        new_branch.parent = tree
+        new_branches.append(new_branch)
 
     if context.scene.tree_gen_merge_verts_by_distance:
         update_log('Merging duplicate vertices; this will take a bit for complex trees.\n')
 
-        context.view_layer.objects.active = new_branches
-        bpy.ops.object.mode_set(mode='EDIT', toggle=True)
-        bpy.ops.mesh.select_all(action='SELECT')
-        bpy.ops.mesh.remove_doubles(threshold=0.0001)
+        for new_branch in new_branches:
+            context.view_layer.objects.active = new_branch
+            bpy.ops.object.mode_set(mode='EDIT', toggle=True)
+            bpy.ops.mesh.select_all(action='SELECT')
+            bpy.ops.mesh.remove_doubles(threshold=0.0001)
 
 
 def generate_lods(context, level_count=3):

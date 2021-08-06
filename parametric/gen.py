@@ -228,7 +228,7 @@ class Tree(object):
 
         # Set up container objects and curves for each level
         for level_name in ['Trunk'] + ['Branches' + str(_) for _ in range(1, self.param.levels)]:
-            level_curve = bpy.data.curves.new(level_name + '_curve', type='CURVE')
+            level_curve = bpy.data.curves.new(level_name.lower(), type='CURVE')
             level_curve.dimensions = '3D'
             level_curve.resolution_u = 4
             level_curve.fill_mode = 'FULL'
