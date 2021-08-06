@@ -152,7 +152,7 @@ class Tree(object):
     """Class to store data for the tree"""
 
     __slots__ = (
-        'param', 'generate_leaves', 'leaves_array', 'stem_index', 'tree_scale', 'branches_curve',
+        'param', 'generate_leaves', 'leaves_array', 'stem_index', 'tree_scale', 'branch_curves',
         'base_length', 'split_num_error', 'tree_obj', 'trunk_length'
     )
 
@@ -165,7 +165,7 @@ class Tree(object):
 
         self.stem_index = 0
         self.tree_scale = 0
-        self.branches_curve = None
+        self.branch_curves = []
         self.base_length = 0
         self.split_num_error = [0, 0, 0, 0, 0, 0, 0]
         self.tree_obj = None
@@ -224,22 +224,26 @@ class Tree(object):
         """Create branches for tree"""
 
         update_log('\nMaking Stems\n')
-
         start_time = time.time()
-        self.branches_curve = bpy.data.curves.new('branches', type='CURVE')
-        self.branches_curve.dimensions = '3D'
-        self.branches_curve.resolution_u = 4
-        self.branches_curve.fill_mode = 'FULL'
-        self.branches_curve.bevel_depth = 1
-        self.branches_curve.bevel_resolution = 10
 
-        # Removed in Blender 2.82+
-        if hasattr(self.branches_curve, 'use_uv_as_generated'):
-            self.branches_curve.use_uv_as_generated = True
+        # Set up container objects and curves for each level
+        for level_name in ['Trunk'] + ['Branches' + str(_) for _ in range(1, self.param.levels)]:
+            level_curve = bpy.data.curves.new(level_name + '_curve', type='CURVE')
+            level_curve.dimensions = '3D'
+            level_curve.resolution_u = 4
+            level_curve.fill_mode = 'FULL'
+            level_curve.bevel_depth = 1
+            level_curve.bevel_resolution = 10
 
-        branches_obj = bpy.data.objects.new('Branches', self.branches_curve)
-        bpy.context.collection.objects.link(branches_obj)
-        branches_obj.parent = self.tree_obj
+            # Removed in Blender 2.82+
+            if hasattr(level_curve, 'use_uv_as_generated'):
+                level_curve.use_uv_as_generated = True
+
+            level_obj = bpy.data.objects.new(level_name, level_curve)
+            bpy.context.collection.objects.link(level_obj)
+            level_obj.parent = self.tree_obj
+
+            self.branch_curves.append(level_curve)
 
         # actually make the branches
         if self.param.branches[0] > 0:
@@ -261,7 +265,7 @@ class Tree(object):
                 # start at random rotation
                 turtle.roll_right(rand_in_range(0, 360))
 
-            trunk = self.branches_curve.splines.new('BEZIER')
+            trunk = self.branch_curves[0].splines.new('BEZIER')
             trunk.radius_interpolation = 'CARDINAL'
             trunk.resolution_u = 2
 
@@ -271,8 +275,9 @@ class Tree(object):
         update_log('\nStems made: %i in %f seconds\n' % (self.stem_index, b_time))
 
         curve_points = 0
-        for spline in self.branches_curve.splines:
-            curve_points += len(spline.bezier_points)
+        for branch_level in self.branch_curves:
+            for spline in branch_level.splines:
+                curve_points += len(spline.bezier_points)
 
         update_log('Curve points: %i\n' % curve_points)
 
@@ -838,7 +843,7 @@ class Tree(object):
                 turtle.right.normalize()
 
             # create new clone branch and set up then recurse
-            split_stem = self.branches_curve.splines.new('BEZIER')
+            split_stem = self.branch_curves[stem.depth].splines.new('BEZIER')  # TODO :: Set depth here
             split_stem.resolution_u = stem.curve.resolution_u
             split_stem.radius_interpolation = 'CARDINAL'
             new_stem = stem.copy()
@@ -918,7 +923,7 @@ class Tree(object):
                 self.leaves_array.append(Leaf(pos_tur.pos, dir_tur.dir, dir_tur.right))
         else:
             for pos_tur, dir_tur, rad, b_offset in branches_array:
-                new_spline = self.branches_curve.splines.new('BEZIER')
+                new_spline = self.branch_curves[d_plus_1].splines.new('BEZIER')
                 new_spline.resolution_u = 6
                 new_spline.radius_interpolation = 'CARDINAL'
                 self.make_stem(dir_tur, Stem(d_plus_1, new_spline, stem, b_offset, rad), pos_corr_turtle=pos_tur)
@@ -1259,7 +1264,7 @@ def construct(params, seed=0, generate_leaves=True):
 
     # Try to get unneeded data out of memory ASAP
     del t.leaves_array
-    del t.branches_curve
+    del t.branch_curves
     del t
 
     return ret_obj
