@@ -295,7 +295,7 @@ class TreeGenRender(bpy.types.Operator):
     bl_idname = "object.tree_gen_render_tree"
     bl_category = "TreeGen"
     bl_label = "Render Tree"
-    bl_options = {'REGISTER'}
+    bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
         utilities.render_tree(context.scene.render_output_path_input)
@@ -308,7 +308,7 @@ class TreeGenConvertToMesh(bpy.types.Operator):
     bl_idname = "object.tree_gen_convert_to_mesh"
     bl_category = "TreeGen"
     bl_label = "Convert To Mesh"
-    bl_options = {'REGISTER'}
+    bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
         from . import utilities
@@ -336,7 +336,7 @@ class TreeGenCreateLODs(bpy.types.Operator):
     bl_idname = "object.tree_gen_create_lods"
     bl_category = "TreeGen"
     bl_label = "Create LODs"
-    bl_options = {'REGISTER'}
+    bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
         from . import utilities
@@ -364,7 +364,7 @@ class TreeGenSaveFile(bpy.types.Operator):
     bl_idname = "object.tree_gen_custom_save"
     bl_category = "TreeGen"
     bl_label = "Save Custom Tree"
-    bl_options = {'REGISTER'}
+    bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
         save_location = context.scene.custom_tree_save_location_input
@@ -392,7 +392,7 @@ class TreeGenLoadParams(bpy.types.Operator):
     bl_idname = "object.tree_gen_custom_load"
     bl_category = "TreeGen"
     bl_label = "Load Tree Parameters"
-    bl_options = {'REGISTER'}
+    bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
         mod_name = context.scene.custom_tree_load_params_input
@@ -430,6 +430,7 @@ class TreeGenMainThreadExecuter(bpy.types.Operator):
 
     bl_idname = 'object.treegen_main_thread_executer'
     bl_label = 'TreeGen internal executer utility'
+    bl_options = {'REGISTER', 'UNDO'}
 
     _updating = False
     _calcs_done = False
