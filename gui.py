@@ -117,7 +117,8 @@ class TreeGen(bpy.types.Operator):
 
     _scene.tree_bend_v_input = _props.FloatVectorProperty(name="", description="Maximum angle by which the direction of the branch may change from start to end, rotating about the branch’s local y-axis. Applied randomly at each segment", default=(0, 50, 0, 0), size=4, min=0, max=360)
 
-    _scene.tree_curve_res_input = _props.FloatVectorProperty(name="", description="Number of segments in each branch", default=(5, 5, 3, 1), size=4, min=1, max=10)
+    _scene.tree_bevel_res_input = _props.IntVectorProperty(name="", description="Number of segments in each branch", default=(10, 10, 10, 10), size=4, min=1, max=10)
+    _scene.tree_curve_res_input = _props.IntVectorProperty(name="", description="Number of segments in each branch", default=(5, 5, 3, 1), size=4, min=1, max=10)
     _scene.tree_curve_input = _props.FloatVectorProperty(name="", description="Angle by which the direction of the branch will change from start to end, rotating about the branch’s local x-axis", default=(0, -40, -40, 0), size=4, min=-360, max=360)
     _scene.tree_curve_v_input = _props.FloatVectorProperty(name="", description="Maximum variation in curve angle of a branch. Applied randomly at each segment", default=(20, 50, 75, 0), size=4, min=-360, max=360)
     _scene.tree_curve_back_input = _props.FloatVectorProperty(name="", description="Angle in the opposite direction to the curve that the branch will curve back from half way along, creating S shaped branches", default=(0, 0, 0, 0), size=4, min=-360, max=360)
@@ -267,10 +268,10 @@ class TreeGen(bpy.types.Operator):
 
         param_names = ['shape', 'g_scale', 'g_scale_v', 'levels', 'ratio', 'flare', 'ratio_power',
                        'base_size', 'down_angle', 'down_angle_v', 'rotate', 'rotate_v', 'branches',
-                       'length', 'length_v', 'taper', 'seg_splits', 'split_angle', 'split_angle_v', 'curve_res',
-                       'curve', 'curve_back', 'curve_v', 'bend_v', 'branch_dist', 'radius_mod', 'leaf_blos_num',
-                       'leaf_shape', 'leaf_scale', 'leaf_scale_x', 'leaf_bend', 'blossom_shape', 'blossom_scale',
-                       'blossom_rate', 'tropism', 'prune_ratio', 'prune_width', 'prune_width_peak',
+                       'length', 'length_v', 'taper', 'seg_splits', 'split_angle', 'split_angle_v', 'bevel_res',
+                       'curve_res', 'curve', 'curve_back', 'curve_v', 'bend_v', 'branch_dist', 'radius_mod',
+                       'leaf_blos_num', 'leaf_shape', 'leaf_scale', 'leaf_scale_x', 'leaf_bend', 'blossom_shape',
+                       'blossom_scale', 'blossom_rate', 'tropism', 'prune_ratio', 'prune_width', 'prune_width_peak',
                        'prune_power_low', 'prune_power_high', 'base_splits']
 
         params = {}
@@ -564,6 +565,7 @@ class TreeGenCustomisePanel(bpy.types.Panel):
         label_row('Taper', 'tree_taper_input', container=box)
         label_row('Radius Modifier', 'tree_radius_mod_input', container=box)
         box.separator()
+        label_row('Curve Bevel Resolution', 'tree_bevel_res_input', container=box)
         label_row('Curve Resolution', 'tree_curve_res_input', container=box)
         label_row('Curve', 'tree_curve_input', container=box)
         label_row('Curve Variation', 'tree_curve_v_input', container=box)
