@@ -10,10 +10,10 @@ import queue
 from copy import deepcopy
 
 from . import parametric, utilities
+from .parametric.gen import update_log
 from .parametric.tree_params import tree_param
 
 
-update_log = parametric.gen.update_log
 main_thread_callback_queue = queue.Queue()
 
 
