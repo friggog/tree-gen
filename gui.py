@@ -117,7 +117,7 @@ class TreeGen(bpy.types.Operator):
 
     _scene.tree_bend_v_input = _props.FloatVectorProperty(name="", description="Maximum angle by which the direction of the branch may change from start to end, rotating about the branch’s local y-axis. Applied randomly at each segment", default=(0, 50, 0, 0), size=4, min=0, max=360)
 
-    _scene.tree_bevel_res_input = _props.IntVectorProperty(name="", description="Number of segments in each branch", default=(10, 10, 10, 10), size=4, min=1, max=10)
+    _scene.tree_bevel_res_input = _props.IntVectorProperty(name="", description="Resolution of curve bevels", default=(10, 10, 10, 10), size=4, min=1, max=10)
     _scene.tree_curve_res_input = _props.IntVectorProperty(name="", description="Number of segments in each branch", default=(5, 5, 3, 1), size=4, min=1, max=10)
     _scene.tree_curve_input = _props.FloatVectorProperty(name="", description="Angle by which the direction of the branch will change from start to end, rotating about the branch’s local x-axis", default=(0, -40, -40, 0), size=4, min=-360, max=360)
     _scene.tree_curve_v_input = _props.FloatVectorProperty(name="", description="Maximum variation in curve angle of a branch. Applied randomly at each segment", default=(20, 50, 75, 0), size=4, min=-360, max=360)
