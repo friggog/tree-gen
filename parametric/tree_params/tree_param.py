@@ -24,6 +24,7 @@ defaults = {
     'seg_splits': [0, 0, 0, 0],
     'split_angle': [40, 0, 0, 0],
     'split_angle_v': [5, 0, 0, 0],
+    'bevel_res': [10, 10, 10, 10],
     'curve_res': [5, 5, 3, 1],
     'curve': [0, -40, -40, 0],
     'curve_back': [0, 0, 0, 0],

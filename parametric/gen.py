@@ -227,13 +227,13 @@ class Tree(object):
         start_time = time.time()
 
         # Set up container objects and curves for each level
-        for level_name in ['Trunk'] + ['Branches' + str(_) for _ in range(1, self.param.levels)]:
+        for level_depth, level_name in enumerate(['Trunk'] + ['Branches' + str(_) for _ in range(1, self.param.levels)]):
             level_curve = bpy.data.curves.new(level_name.lower(), type='CURVE')
             level_curve.dimensions = '3D'
-            level_curve.resolution_u = 4
+            level_curve.resolution_u = self.param.curve_res[level_depth]
             level_curve.fill_mode = 'FULL'
             level_curve.bevel_depth = 1
-            level_curve.bevel_resolution = 10
+            level_curve.bevel_resolution = self.param.bevel_res[level_depth]
 
             # Removed in Blender 2.82+
             if hasattr(level_curve, 'use_uv_as_generated'):
@@ -267,7 +267,7 @@ class Tree(object):
 
             trunk = self.branch_curves[0].splines.new('BEZIER')
             trunk.radius_interpolation = 'CARDINAL'
-            trunk.resolution_u = 2
+            trunk.resolution_u = self.param.curve_res[0]
 
             self.make_stem(turtle, Stem(0, trunk))
 
@@ -924,7 +924,7 @@ class Tree(object):
         else:
             for pos_tur, dir_tur, rad, b_offset in branches_array:
                 new_spline = self.branch_curves[d_plus_1].splines.new('BEZIER')
-                new_spline.resolution_u = 6
+                new_spline.resolution_u = self.param.curve_res[d_plus_1]
                 new_spline.radius_interpolation = 'CARDINAL'
                 self.make_stem(dir_tur, Stem(d_plus_1, new_spline, stem, b_offset, rad), pos_corr_turtle=pos_tur)
 
