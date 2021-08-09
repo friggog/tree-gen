@@ -1,4 +1,4 @@
-nbl_info = {
+bl_info = {
     "name": "TreeGen",
     "category": "Object",
     "description": "Generate high quality tree models",
