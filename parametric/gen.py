@@ -24,7 +24,6 @@ from ..leaf import Leaf
 from .tree_params.tree_param import TreeParam
 
 __console_logging__ = True
-windman = bpy.context.window_manager
 
 # ----- GENERAL FUNCTIONS ----- #
 
@@ -293,6 +292,7 @@ class Tree(object):
         start_time = time.time()
 
         # Start loading spinner
+        windman = bpy.context.window_manager
         windman.progress_begin(0, len(self.leaves_array))
 
         # go through global leaf array populated in branch making phase and add polygons to mesh
