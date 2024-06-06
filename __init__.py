@@ -2,7 +2,7 @@ bl_info = {
     "name": "TreeGen",
     "category": "Object",
     "description": "Generate high quality tree models",
-    "author": "Charlie Hewitt and Luke Pflibsen-Jones",
+    "author": "Charlie Hewitt and Sami Pflibsen-Jones",
     "version": (0, 0, 4),
     "wiki_url": "https://github.com/friggog/tree-gen/wiki",
     "tracker_url": "https://github.com/friggog/tree-gen/issues/new/choose",
