@@ -108,9 +108,48 @@ venv.bak/
 # mypy
 .mypy_cache/
 
+# Claude settings
+.claude/*
+
+# Testing
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+*.cover
+.hypothesis/
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+.python-version
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+*.egg
+*.whl
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
 
 # ========
 build.bat
 staging/
-.idea/
 build_and_run.bat
