@@ -45,7 +45,9 @@ defaults = {
     'prune_width': 0.5,
     'prune_width_peak': 0.5,
     'prune_power_low': 0.5,
-    'prune_power_high': 0.5
+    'prune_power_high': 0.5,
+    'branches_start': 0.05,
+    'leaves_start': 0.05
 }
 
 

@@ -192,7 +192,20 @@ class TreeGen(bpy.types.Operator):
     # Create LODs
     _scene.tree_gen_create_leaf_lods_input = _props.BoolProperty(name="Create Leaf LODs After Generation", default=False,
                                                                  description="After generation, create three copies of the leaves of increasing sparsity.")
-
+    _scene.tree_branches_start_input = _props.FloatProperty(
+    name="Choose the position on the trunk from where your branches will start.",
+    description="Choose the position on the trunk from where your branches will start set value between [0..1]",
+    default=0.05,
+    min=0.0,
+    max=1.0
+)
+    _scene.tree_leaves_start_input = _props.FloatProperty(
+    name="Choose the position on the highest level branches from where your leaves will start.",
+    description="Choose the position on the highest level branches from where your leaves will start. set value between [0..1]",
+    default=0.05,
+    min=0.0,
+    max=1.0
+)
     # ---
     def execute(self, context):
         # "Generate Tree" button callback
@@ -267,13 +280,12 @@ class TreeGen(bpy.types.Operator):
         scene = context.scene
 
         param_names = ['shape', 'g_scale', 'g_scale_v', 'levels', 'ratio', 'flare', 'ratio_power',
-                       'base_size', 'down_angle', 'down_angle_v', 'rotate', 'rotate_v', 'branches',
-                       'length', 'length_v', 'taper', 'seg_splits', 'split_angle', 'split_angle_v', 'bevel_res',
-                       'curve_res', 'curve', 'curve_back', 'curve_v', 'bend_v', 'branch_dist', 'radius_mod',
-                       'leaf_blos_num', 'leaf_shape', 'leaf_scale', 'leaf_scale_x', 'leaf_bend', 'blossom_shape',
-                       'blossom_scale', 'blossom_rate', 'tropism', 'prune_ratio', 'prune_width', 'prune_width_peak',
-                       'prune_power_low', 'prune_power_high', 'base_splits']
-
+               'base_size', 'down_angle', 'down_angle_v', 'rotate', 'rotate_v', 'branches',
+               'length', 'length_v', 'taper', 'seg_splits', 'split_angle', 'split_angle_v', 'bevel_res',
+               'curve_res', 'curve', 'curve_back', 'curve_v', 'bend_v', 'branch_dist', 'radius_mod',
+               'leaf_blos_num', 'leaf_shape', 'leaf_scale', 'leaf_scale_x', 'leaf_bend', 'blossom_shape',
+               'blossom_scale', 'blossom_rate', 'tropism', 'prune_ratio', 'prune_width', 'prune_width_peak',
+               'prune_power_low', 'prune_power_high', 'base_splits', 'branches_start','leaves_start']
         params = {}
         for name in param_names:
             try:
@@ -542,6 +554,8 @@ class TreeGenCustomisePanel(bpy.types.Panel):
         box.separator()
         label_row('Trunk Splits', 'tree_base_splits_input', container=box)
         label_row('Trunk Flare', 'tree_flare_input', container=box)
+        label_row('Branches Start', 'tree_branches_start_input', container=box)
+        label_row('Leaves Start', 'tree_leaves_start_input', container=box)
         box.separator()
         label_row('Height', 'tree_g_scale_input', container=box)
         label_row('Height Variation', 'tree_g_scale_v_input', container=box)

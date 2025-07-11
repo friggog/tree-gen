@@ -29,12 +29,9 @@ __console_logging__ = True
 
 update_log = utilities.get_logger(__console_logging__)
 
-
 def rand_in_range(lower, upper):
     """Generate random number between lower and upper"""
-
     return (random_random() * (upper - lower)) + lower
-
 
 def calc_point_on_bezier(offset, start_point, end_point):
     """Evaluate Bezier curve at offset between bezier_spline_points start_point and end_point"""
@@ -49,13 +46,15 @@ def calc_point_on_bezier(offset, start_point, end_point):
     # initialize new vector to add subclassed methods
     return Vector(res)
 
-
 def calc_tangent_to_bezier(offset, start_point, end_point):
-    """Calculate tangent to Bezier curve at offset between bezier_spline_points start_point and end_point"""
-    if offset < 0 or offset > 1:
-        raise Exception('Offset out of range: %s not between 0 and 1' % offset)
-
-    one_minus_offset = 1 - offset
+    """Calculate tangent to Bezier curve with safe offset clamping"""
+    # Clamp offset between 0 and 1
+    clamped_offset = max(0.0, min(1.0, offset))
+    
+    if clamped_offset != offset:
+        print(f"Clamped offset from {offset} to {clamped_offset}")
+    
+    one_minus_offset = 1 - clamped_offset
 
     start_handle_right = start_point.handle_right
     end_handle_left = end_point.handle_left
@@ -66,21 +65,8 @@ def calc_tangent_to_bezier(offset, start_point, end_point):
     # initialize new vector to add subclassed methods
     return Vector(res)
 
-
 def calc_helix_points(turtle, rad, pitch):
     """ calculates required points to produce helix bezier curve with given radius and pitch in direction of turtle"""
-    # alpha = radians(90)
-    # pit = pitch/(2*pi)
-    # a_x = rad*cos(alpha)
-    # a_y = rad*sin(alpha)
-    # a = pit*alpha*(rad - a_x)*(3*rad - a_x)/(a_y*(4*rad - a_x)*tan(alpha))
-    # b_0 = Vector([a_x, -a_y, -alpha*pit])
-    # b_1 = Vector([(4*rad - a_x)/3, -(rad - a_x)*(3*rad - a_x)/(3*a_y), -a])
-    # b_2 = Vector([(4*rad - a_x)/3, (rad - a_x)*(3*rad - a_x)/(3*a_y), a])
-    # b_3 = Vector([a_x, a_y, alpha*pit])
-    # axis = Vector([0, 0, 1])
-
-    # simplifies greatly for case inc_angle = 90
     points = [Vector([0, -rad, -pitch / 4]),
               Vector([(4 * rad) / 3, -rad, 0]),
               Vector([(4 * rad) / 3, rad, 0]),
@@ -97,11 +83,9 @@ def calc_helix_points(turtle, rad, pitch):
 
     return points[1] - points[0], points[2] - points[0], points[3] - points[0], turtle.dir.copy()
 
-
 def point_in_cube(point):
     size = 2
     return abs(point.x) < size and abs(point.y) < size and abs(point.z - size) < size
-
 
 # ----- MAIN CLASSES ----- #
 
@@ -110,7 +94,6 @@ class BranchMode(Enum):
     alt_opp = 1
     whorled = 2
     fan = 3
-
 
 class Stem(object):
     """Class to store data for each stem (branch) in the system, primarily to
@@ -146,7 +129,6 @@ class Stem(object):
     def __str__(self):
         return '%s %s %s' % (self.length, self.offset, self.radius)
 
-
 class Tree(object):
     """Class to store data for the tree"""
 
@@ -157,11 +139,9 @@ class Tree(object):
 
     def __init__(self, param, generate_leaves=True):
         """initialize tree with specified parameters"""
-
         self.param = param
         self.generate_leaves = generate_leaves
         self.leaves_array = []
-
         self.stem_index = 0
         self.tree_scale = 0
         self.branch_curves = []
@@ -176,7 +156,6 @@ class Tree(object):
 
     def make(self):
         """make the tree"""
-
         # create parent object
         self.tree_obj = bpy.data.objects.new('Tree', None)
         bpy.context.collection.objects.link(self.tree_obj)
@@ -187,6 +166,7 @@ class Tree(object):
 
         # Create leaf mesh if needed and enabled
         if self.generate_leaves:
+            print("Generating leaves...")  # Debug print
             self.create_leaf_mesh()
 
     def points_for_floor_split(self):
@@ -284,23 +264,35 @@ class Tree(object):
 
     def create_leaf_mesh(self):
         """Create leaf mesh for tree"""
+        print(f"\nCreating leaf mesh with {len(self.leaves_array)} leaves")  # Debug print
 
         if len(self.leaves_array) <= 0:
+            print("No leaves to generate. Possible reasons:")
+            print(f"- leaf_blos_num parameter: {self.param.leaf_blos_num}")
+            print(f"- tree levels: {self.param.levels}")
+            print(f"- generate_leaves flag: {self.generate_leaves}")
+            print(f"- stem depths reached: {self.stem_index} stems processed")
             return
 
-        update_log('\nMaking Leaves\n')
+        print("Making Leaves")  # Debug print
         start_time = time.time()
 
         # Start loading spinner
         windman = bpy.context.window_manager
         windman.progress_begin(0, len(self.leaves_array))
 
-        # go through global leaf array populated in branch making phase and add polygons to mesh
-        base_leaf_shape = Leaf.get_shape(self.param.leaf_shape, self.tree_scale / self.param.g_scale,
-                                         self.param.leaf_scale, self.param.leaf_scale_x)
+        # Get leaf shapes
+        base_leaf_shape = Leaf.get_shape(self.param.leaf_shape,
+                                        self.tree_scale / self.param.g_scale,
+                                        self.param.leaf_scale,
+                                        self.param.leaf_scale_x)
 
-        base_blossom_shape = Leaf.get_shape(-self.param.blossom_shape, self.tree_scale / self.param.g_scale,
-                                            self.param.blossom_scale, 1)
+        base_blossom_shape = Leaf.get_shape(-self.param.blossom_shape,
+                                            self.tree_scale / self.param.g_scale,
+                                            self.param.blossom_scale,
+                                            1)
+
+        # Prepare mesh data
         leaf_verts = []
         leaf_faces = []
         leaf_index = 0
@@ -313,7 +305,8 @@ class Tree(object):
             # Update loading spinner periodically
             if counter % 500 == 0:
                 windman.progress_update(counter / 100)
-                update_log('\r-> {} leaves made, {} blossoms made'.format(leaf_index, blossom_index))
+                print(f'\r-> {leaf_index} leaves made, {blossom_index} blossoms made', end='')
+
             if self.param.blossom_rate and random_random() < self.param.blossom_rate:
                 verts, faces = leaf.get_mesh(self.param.leaf_bend, base_blossom_shape, blossom_index)
                 blossom_verts.extend(verts)
@@ -326,39 +319,36 @@ class Tree(object):
                 leaf_index += 1
             counter += 1
 
-        # set up mesh object
+        # Create leaf mesh object
         if leaf_index > 0:
+            print(f"\nCreating {leaf_index} leaves")  # Debug print
             leaves = bpy.data.meshes.new('leaves')
             leaves_obj = bpy.data.objects.new('Leaves', leaves)
             bpy.context.collection.objects.link(leaves_obj)
             leaves_obj.parent = self.tree_obj
             leaves.from_pydata(leaf_verts, (), leaf_faces)
-            # set up UVs for leaf polygons
-            leaf_uv = base_leaf_shape[2]
 
+            # Set up UVs if available
+            leaf_uv = base_leaf_shape[2]
             if leaf_uv:
                 leaves.uv_layers.new(name="leavesUV")
                 uv_layer = leaves.uv_layers.active.data
-
                 for seg_ind in range(int(len(leaf_faces) / len(base_leaf_shape[1]))):
-                    vert_ind = 0
-                    for vert in leaf_uv:
+                    for vert_ind, vert in enumerate(leaf_uv):
                         uv_layer[seg_ind * len(leaf_uv) + vert_ind].uv = vert
-                        vert_ind += 1
-                        # leaves.validate()
 
+        # Create blossom mesh object
         if blossom_index > 0:
+            print(f"Creating {blossom_index} blossoms")  # Debug print
             blossom = bpy.data.meshes.new('blossom')
             blossom_obj = bpy.data.objects.new('Blossom', blossom)
             bpy.context.collection.objects.link(blossom_obj)
             blossom_obj.parent = self.tree_obj
             blossom.from_pydata(blossom_verts, (), blossom_faces)
-            # blossom.validate()
 
         l_time = time.time() - start_time
-        update_log('\nMade %i leaves and %i blossoms in %f seconds\n' % (leaf_index, blossom_index, l_time))
+        print(f'\nMade {leaf_index} leaves and {blossom_index} blossoms in {l_time} seconds\n')
         windman.progress_end()
-
     def make_leaf(self, leaf, base_leaf_shape, index, verts_array, faces_array):
         """get vertices and faces for leaf and append to appropriate arrays"""
         verts, faces = leaf.get_mesh(self.param.leaf_bend, base_leaf_shape, index)
@@ -366,9 +356,8 @@ class Tree(object):
         faces_array.extend(faces)
 
     def make_stem(self, turtle, stem, start=0, split_corr_angle=0, num_branches_factor=1, clone_prob=1,
-                  pos_corr_turtle=None, cloned_turtle=None):
-        """Generate stem given parameters, as well as all children (branches, splits and leaves) via
-        recursion"""
+              pos_corr_turtle=None, cloned_turtle=None):
+        """Generate stem given parameters, as well as all children (branches, splits and leaves) via recursion"""
 
         # if the stem is so thin as to be invisible then don't bother to make it
         if 0 <= stem.radius_limit < 0.0001:
@@ -439,18 +428,27 @@ class Tree(object):
         # calc base segment
         base_seg_ind = ceil(self.param.base_size[0] * int(self.param.curve_res[0]))
 
+        # Initialize all leaf/branch variables
         leaf_count = 0
+        f_leaves_on_seg = 0
+        leaves_on_seg = 0
         branch_count = 0
-        if depth == self.param.levels - 1 and depth > 0 and self.param.leaf_blos_num != 0:
-            # calc base leaf count
-            leaf_count = self.calc_leaf_count(stem)
-            # correct leaf count for start position along stem
-            leaf_count *= 1 - start / curve_res
-            # divide by curve_res to get no per seg
-            f_leaves_on_seg = leaf_count / curve_res
+        f_branches_on_seg = 0
+        branches_on_seg = 0
+        leaf_num_error = 0
+        branch_num_error = 0
 
+        # decide on start rotation for branches/leaves
+        prev_rotation_angle = [0]
+        if self.param.rotate[d_plus_1] >= 0:
+            # start at random rotation
+            prev_rotation_angle[0] = rand_in_range(0, 360)
         else:
-            # calc base branch count
+            # on this case prev_rotation_angle used as multiplier to alternate side of branch
+            prev_rotation_angle[0] = 1
+
+        # calc branch count (only if not at max depth)
+        if depth < self.param.levels - 1:
             branch_count = self.calc_branch_count(stem)
             # correct branch Count for start position along stem
             branch_count *= 1 - start / curve_res
@@ -459,22 +457,11 @@ class Tree(object):
             # divide by curve_res to get no per seg
             f_branches_on_seg = branch_count / curve_res
 
-        # higher point resolution for flared based
-        max_points_per_seg = ceil(max(1.0, 100 / curve_res))
-
-        # set up FS error values
-        branch_num_error = 0
-        leaf_num_error = 0
-
-        # decide on start rotation for branches/leaves
-        # use array to allow other methods to modify the value (otherwise passed by value)
-        prev_rotation_angle = [0]
-        if self.param.rotate[d_plus_1] >= 0:
-            # start at random rotation
-            prev_rotation_angle[0] = rand_in_range(0, 360)
-        else:
-            # on this case prev_rotation_angle used as multiplier to alternate side of branch
-            prev_rotation_angle[0] = 1
+        # calc leaf count (only at max depth)
+        if depth == self.param.levels - 1 and depth > 0 and self.param.leaf_blos_num != 0:
+            leaf_count = self.calc_leaf_count(stem)
+            leaf_count *= 1 - start / curve_res
+            f_leaves_on_seg = leaf_count / curve_res
 
         # calc helix parameters if needed
         hel_p_0 = hel_p_1 = hel_p_2 = hel_axis = None
@@ -493,7 +480,7 @@ class Tree(object):
 
         # point resolution for this seg, max_points_per_seg if base, 1 otherwise
         if depth == 0 or self.param.taper[depth] > 1:
-            points_per_seg = max_points_per_seg
+            points_per_seg = ceil(max(1.0, 100 / curve_res))
         else:
             points_per_seg = 2
 
@@ -562,7 +549,7 @@ class Tree(object):
 
                     if self.param.base_splits > 0 and depth == 0 and seg_ind == base_seg_ind:
                         # if base_seg_ind and has base splits then override with base split number
-                        # take random number of splits up to max of base_splits if negative
+                        # take random number of splits up to max of base_splits
                         if self.param.base_splits < 0:
                             num_of_splits = int(random_random() * (abs(self.param.base_splits) + 0.5))
                         else:
@@ -579,48 +566,36 @@ class Tree(object):
                             num_branches_factor /= num_of_splits + 1
                             num_branches_factor = max(0.8, num_branches_factor)
 
-                            # TODO do this better?
-                            # if depth != self.param.levels - 1:
                             branch_count *= num_branches_factor
                             f_branches_on_seg = branch_count / curve_res
 
-                # add branches/leaves for this seg
-                # if below max level of recursion then draw branches, otherwise draw leaves
-                r_state = random_getstate()
-                if abs(branch_count) > 0 and depth < self.param.levels - 1:
-                    if branch_count < 0:
-                        # fan branches
+                # Handle branches (only if not at max depth)
+                if depth < self.param.levels - 1:
+                    if branch_count < 0:  # fan branches
                         if seg_ind == curve_res:
                             branches_on_seg = int(branch_count)
                         else:
                             branches_on_seg = 0
-
-                    else:
-                        # get FS corrected branch number
+                    else:  # normal branches
                         branches_on_seg = int(f_branches_on_seg + branch_num_error)
                         branch_num_error -= branches_on_seg - f_branches_on_seg
 
-                    # add branches
-                    if abs(branches_on_seg) > 0:
+                    if abs(branches_on_seg) > 0 and seg_ind > curve_res * self.param.branches_start:
                         self.make_branches(turtle, stem, seg_ind, branches_on_seg, prev_rotation_angle)
 
-                elif abs(leaf_count) > 0 and depth > 0:
-                    if leaf_count < 0:
-                        # fan leaves
+                # Handle leaves (only at max depth)
+                if depth == self.param.levels - 1 and depth > 0 and self.param.leaf_blos_num != 0:
+                    if leaf_count < 0:  # fan leaves
                         if seg_ind == curve_res:
                             leaves_on_seg = leaf_count
                         else:
                             leaves_on_seg = 0
-                    else:
-                        # get FS corrected number of leaves
+                    else:  # normal leaves
                         leaves_on_seg = int(f_leaves_on_seg + leaf_num_error)
                         leaf_num_error -= leaves_on_seg - f_leaves_on_seg
-
-                    # add leaves
-                    if abs(leaves_on_seg) > 0:
+                    if abs(leaves_on_seg) > 0 and seg_ind > curve_res * self.param.leaves_start:
+             
                         self.make_leaves(turtle, stem, seg_ind, leaves_on_seg, prev_rotation_angle)
-
-                random_setstate(r_state)
 
                 # perform cloning if needed, not allowed for helix (also don't curve/apply tropism as irrelevant)
                 if self.param.curve_v[depth] >= 0:
@@ -630,22 +605,20 @@ class Tree(object):
                         using_direct_split = self.param.split_angle[depth] < 0
 
                         if using_direct_split:
-                            spr_angle = abs(self.param.split_angle[depth]) + random_uniform(-1, 1) * \
-                                self.param.split_angle_v[depth]
+                            spr_angle = abs(self.param.split_angle[depth]) + random_uniform(-1, 1) * self.param.split_angle_v[depth]
                             spl_angle = 0
                             split_corr_angle = 0
                         else:
                             declination = turtle.dir.declination()
-                            spl_angle = self.param.split_angle[depth] + random_uniform(-1, 1) * self.param.split_angle_v[
-                                depth] - declination
+                            spl_angle = self.param.split_angle[depth] + random_uniform(-1, 1) * self.param.split_angle_v[depth] - declination
                             spl_angle = max(0, spl_angle)
                             split_corr_angle = spl_angle / remaining_segs
-                            spr_angle = - (20 + 0.75 * (30 + abs(declination - 90) * random_random() ** 2))
+                            spr_angle = -(20 + 0.75 * (30 + abs(declination - 90) * random_random() ** 2))
 
                         # make clone branches
                         r_state = random_getstate()
-                        self.make_clones(turtle, seg_ind, split_corr_angle, num_branches_factor, clone_prob, stem,
-                                         num_of_splits, spl_angle, spr_angle, is_base_split)
+                        self.make_clones(turtle, seg_ind, split_corr_angle, num_branches_factor, clone_prob,
+                                        stem, num_of_splits, spl_angle, spr_angle, is_base_split)
                         random_setstate(r_state)
 
                         # apply split to base stem
@@ -672,15 +645,19 @@ class Tree(object):
                     else:
                         apply_tropism(turtle, Vector([self.param.tropism[0], self.param.tropism[1], 0]))
 
-                # increase point resolution at base of trunk and apply flaring effect
-                if points_per_seg > 2:
-                    self.increase_bezier_point_res(stem, seg_ind, points_per_seg)
+            # increase point resolution at base of trunk and apply flaring effect
+            if points_per_seg > 2:
+                self.increase_bezier_point_res(stem, seg_ind, points_per_seg)
 
         # scale down bezier point handles for flared base of trunk
         if points_per_seg > 2:
-            scale_bezier_handles_for_flare(stem, max_points_per_seg)
+            scale_bezier_handles_for_flare(stem, points_per_seg)
 
         self.stem_index += 1
+
+
+
+
 
     def test_stem(self, turtle, stem, start=0, split_corr_angle=0, clone_prob=1):
         """Test if stem is inside pruning envelope"""
@@ -752,7 +729,10 @@ class Tree(object):
                     if self.param.base_splits > 0 and depth == 0 and seg_ind == base_seg_ind:
                         # if base_seg_ind and has base splits then override with base split number
                         # take random number of splits up to max of base_splits
-                        num_of_splits = int(random_random() * (self.param.base_splits + 0.5))
+                        if self.param.base_splits < 0:
+                            num_of_splits = int(random_random() * (self.param.base_splits + 0.5))
+                        else:
+                            num_of_splits = int(self.param.base_splits)
                     elif seg_splits > 0 and seg_ind < curve_res and (depth > 0 or seg_ind > base_seg_ind):
                         # otherwise get number of splits from seg_splits and use Floyd-Steinberg to
                         # fix non-integer values only clone with probability clone_prob
@@ -864,11 +844,14 @@ class Tree(object):
         branches_array = []
         d_plus_1 = min(3, stem.depth + 1)
 
+        if is_leaves:
+            print(f"Adding leaves: branches_on_seg={branches_on_seg}")
+
         if branches_on_seg < 0:  # fan branches
             for branch_ind in range(abs(int(branches_on_seg))):
                 stem_offset = 1
                 branches_array.append(self.set_up_branch(turtle, stem, BranchMode.fan, 1, start_point, end_point, stem_offset,
-                                                         branch_ind, prev_rotation_angle, abs(branches_on_seg)))
+                                                        branch_ind, prev_rotation_angle, abs(branches_on_seg)))
         else:
             base_length = stem.length * self.param.base_size[stem.depth]
             branch_dist = self.param.branch_dist[d_plus_1]
@@ -895,8 +878,8 @@ class Tree(object):
                         # set up these branches
                         for branch_ind in range(branches_this_whorl):
                             branches_array.append(self.set_up_branch(turtle, stem, BranchMode.whorled, offset, start_point,
-                                                                     end_point, stem_offset, branch_ind, prev_rotation_angle,
-                                                                     branches_this_whorl))
+                                                                    end_point, stem_offset, branch_ind, prev_rotation_angle,
+                                                                    branches_this_whorl))
 
                     # rotate start angle for next whorl
                     prev_rotation_angle[0] += self.param.rotate[d_plus_1]
@@ -913,14 +896,15 @@ class Tree(object):
                     # if not in base area then set up the branch
                     if stem_offset > base_length:
                         branches_array.append(self.set_up_branch(turtle, stem, BranchMode.alt_opp, offset,
-                                                                 start_point, end_point, stem_offset, branch_ind,
-                                                                 prev_rotation_angle))
+                                                                start_point, end_point, stem_offset, branch_ind,
+                                                                prev_rotation_angle))
 
         # make all new branches from branches_array, passing pos_corr_turtle which will be used to
         # set the position of branch_turtle in this call
         if is_leaves:
             for pos_tur, dir_tur, _, _ in branches_array:
                 self.leaves_array.append(Leaf(pos_tur.pos, dir_tur.dir, dir_tur.right))
+                print(f"Leaf added at position: {pos_tur.pos}")
         else:
             for pos_tur, dir_tur, rad, b_offset in branches_array:
                 new_spline = self.branch_curves[d_plus_1].splines.new('BEZIER')
@@ -928,10 +912,92 @@ class Tree(object):
                 new_spline.radius_interpolation = 'CARDINAL'
                 self.make_stem(dir_tur, Stem(d_plus_1, new_spline, stem, b_offset, rad), pos_corr_turtle=pos_tur)
 
+
     def make_leaves(self, turtle, stem, seg_ind, leaves_on_seg, prev_rotation_angle):
         """Make the required leaves for a segment of the stem"""
-        self.make_branches(turtle, stem, seg_ind, leaves_on_seg,
-                           prev_rotation_angle, True)
+        if abs(leaves_on_seg) <= 0:
+            return
+
+        start_point = stem.curve.bezier_points[-2]
+        end_point = stem.curve.bezier_points[-1]
+        curve_res = int(self.param.curve_res[stem.depth])
+        stem_length = stem.length
+        
+        # Base length with minimum safety margin
+        base_length = max(0.001, stem.length * self.param.base_size[stem.depth])
+        
+        if leaves_on_seg < 0:  # Fan leaves
+            if seg_ind == curve_res:
+                offset = 1.0
+                stem_offset = stem_length
+                if stem_offset <= base_length:
+                    return
+                    
+                try:
+                    branch_pos_turtle = make_branch_pos_turtle(turtle, offset, start_point, end_point, 0)
+                    branch_dir_turtle = make_branch_dir_turtle(turtle, self.param.curve_v[stem.depth] < 0, 
+                                                            offset, start_point, end_point)
+                    
+                    # Vector safety checks
+                    if branch_dir_turtle.right.length < 0.001:
+                        branch_dir_turtle.right = branch_dir_turtle.dir.cross(Vector((0, 0, 1))).normalized()
+                    
+                    d_angle = self.calc_down_angle(stem, stem_offset)
+                    branch_dir_turtle.pitch_down(d_angle)
+                    
+                    self.leaves_array.append(Leaf(branch_pos_turtle.pos, 
+                                                branch_dir_turtle.dir, 
+                                                branch_dir_turtle.right))
+                except Exception as e:
+                    print(f"Fan leaf generation failed: {str(e)}")
+                    
+        else:  # Normal leaves
+            for leaf_ind in range(abs(int(leaves_on_seg))):
+                offset = 0.5  # Initialize with default value
+                try:
+                    # Fixed offset calculation with proper clamping
+                    if leaves_on_seg > 1:
+                        offset = max(0.0, min(1.0, leaf_ind / (leaves_on_seg - 1)))
+                    else:
+                        offset = 0.5
+
+                    stem_offset = (((seg_ind - 1) + offset) / curve_res) * stem_length
+                    
+                    if stem_offset <= base_length:
+                        continue
+                        
+                    branch_pos_turtle = make_branch_pos_turtle(turtle, offset, start_point, end_point, 0)
+                    branch_dir_turtle = make_branch_dir_turtle(turtle, self.param.curve_v[stem.depth] < 0, 
+                                                            offset, start_point, end_point)
+                    
+                    # Ensure valid right vector
+                    if branch_dir_turtle.right.length < 0.001:
+                        branch_dir_turtle.right = branch_dir_turtle.dir.cross(Vector((0, 0, 1))).normalized()
+                    
+                    d_angle = self.calc_down_angle(stem, stem_offset)
+                    branch_dir_turtle.pitch_down(d_angle)
+                    
+                    # Final validation before creating leaf
+                    if branch_dir_turtle.dir.length < 0.001 or branch_dir_turtle.right.length < 0.001:
+                        raise ValueError("Invalid leaf orientation vectors")
+                        
+                    self.leaves_array.append(Leaf(branch_pos_turtle.pos, 
+                                                branch_dir_turtle.dir, 
+                                                branch_dir_turtle.right))
+                                                
+                except Exception as e:
+                    # Safe error reporting with guaranteed offset value
+                    print(f"Leaf generation failed at seg {seg_ind} offset {offset:.2f}: {str(e)}")
+                    # Fallback orientation using global axes
+                    try:
+                        safe_dir = Vector((0, 0, 1)) if branch_dir_turtle.dir.length < 0.001 else branch_dir_turtle.dir
+                        safe_right = safe_dir.cross(Vector((0, 0, 1))).normalized()
+                        self.leaves_array.append(Leaf(branch_pos_turtle.pos, 
+                                                    safe_dir, 
+                                                    safe_right))
+                    except Exception as fallback_error:
+                        print(f"Fallback leaf creation failed: {str(fallback_error)}")
+
 
     def set_up_branch(self, turtle, stem, branch_mode, offset, start_point,
                       end_point, stem_offset, branch_ind, prev_rot_ang, branches_in_group=0):
@@ -1046,12 +1112,15 @@ class Tree(object):
     def calc_leaf_count(self, stem):
         """Calculate leaf count of this stem as defined in paper"""
         if self.param.leaf_blos_num >= 0:
-            # scale number of leaves to match global scale and taper
+            # Scale number of leaves to match global scale and taper
             leaves = self.param.leaf_blos_num * self.tree_scale / self.param.g_scale
             result = leaves * (stem.length / (stem.parent.length_child_max * stem.parent.length))
         else:  # fan leaves
-            return self.param.leaf_blos_num
+            result = self.param.leaf_blos_num
+
+        print(f"Calculated leaf count for stem (depth {stem.depth}): {result}")  # Debug print
         return result
+
 
     def calc_branch_count(self, stem):
         """Calculate branch count of this stem as defined in paper"""
@@ -1138,10 +1207,16 @@ class Tree(object):
         return radius
 
     def increase_bezier_point_res(self, stem, seg_ind, points_per_seg):
-        """add in new points in appropriate positions along curve and modify radius for flare"""
-        # need a copy of the end point as it is moved during the process, but also used for
-        # calculations throughout
+        """Add in new points in appropriate positions along curve and modify radius for flare"""
         curve_res = int(self.param.curve_res[stem.depth])
+
+        # Debug: Print the number of bezier points
+        print(f"Number of bezier points before access: {len(stem.curve.bezier_points)}")
+
+        if len(stem.curve.bezier_points) < 2:
+            print("Not enough bezier points to access [-2] index.")
+            return
+
         seg_end_point = stem.curve.bezier_points[-1]
         FakeSplinePoint = namedtuple('FakeSplinePoint', ['co', 'handle_left', 'handle_right'])
         end_point = FakeSplinePoint(seg_end_point.co.copy(),
@@ -1149,13 +1224,11 @@ class Tree(object):
                                     seg_end_point.handle_right.copy())
         seg_start_point = stem.curve.bezier_points[-2]
         start_point = FakeSplinePoint(seg_start_point.co.copy(),
-                                      seg_start_point.handle_left.copy(),
-                                      seg_start_point.handle_right.copy())
+                                    seg_start_point.handle_left.copy(),
+                                    seg_start_point.handle_right.copy())
+
         for k in range(0, points_per_seg):
-            # add new point and position
-            # at this point the normals are left over-sized in order to allow for evaluation of the
-            # original curve in later steps
-            # once the stem is entirely built we then go back and scale the handles
+            # Add new point and position
             offset = k / (points_per_seg - 1)
             if k == 0:
                 curr_point = seg_start_point
@@ -1171,14 +1244,13 @@ class Tree(object):
                     curr_point.handle_right = end_point.handle_right
                 else:
                     curr_point.co = calc_point_on_bezier(offset, start_point, end_point)
-                    # set handle to match direction of curve
                     tangent = calc_tangent_to_bezier(offset, start_point, end_point).normalized()
-                    # and set the magnitude to match other control points
                     dir_vec_mag = (end_point.handle_left - end_point.co).magnitude
                     curr_point.handle_left = curr_point.co - tangent * dir_vec_mag
                     curr_point.handle_right = curr_point.co + tangent * dir_vec_mag
 
             curr_point.radius = self.radius_at_offset(stem, (offset + seg_ind - 1) / curve_res)
+
 
     def point_inside(self, point):
         """Check if point == inside pruning envelope, from WP 4.6"""
@@ -1188,7 +1260,6 @@ class Tree(object):
         inside = (dist / self.tree_scale) < (self.param.prune_width * self.shape_ratio(8, ratio))
         # inside = inside and (point.x > -0.7 or point.z > 5.3)
         return inside
-
 
 # ------ RELATED FUNCTIONS ------ #
 
@@ -1203,27 +1274,35 @@ def make_branch_pos_turtle(dir_turtle, offset, start_point, end_point, radius_li
 
     return branch_pos_turtle
 
-
+# In make_branch_dir_turtle function
 def make_branch_dir_turtle(turtle, helix, offset, start_point, end_point):
     """Create and setup the turtle for the direction of a new branch"""
-
     branch_dir_turtle = CHTurtle()
     tangent = calc_tangent_to_bezier(offset, start_point, end_point)
+    
+    # Ensure valid tangent vector
+    if tangent.length < 0.0001:
+        tangent = turtle.dir.copy()
     tangent.normalize()
     branch_dir_turtle.dir = tangent
 
     if helix:
-        # approximation to actual normal to preserve for helix
-        tan_d = calc_tangent_to_bezier(offset + 0.0001, start_point, end_point).normalized()
+        # Handle helix case with safety margin
+        tan_offset = min(offset + 0.0001, 1.0)
+        tan_d = calc_tangent_to_bezier(tan_offset, start_point, end_point).normalized()
         branch_dir_turtle.right = branch_dir_turtle.dir.cross(tan_d)
     else:
-        # generally curve lines in plane define by turtle.right, so is fair approximation to take new right as being
-        # parallel to this, ie find the turtle up vector (in the plane) and cross with tangent (assumed in the plane)
-        # to get the new direction - this doesn't hold for the helix
-        branch_dir_turtle.right = turtle.dir.cross(turtle.right).cross(branch_dir_turtle.dir)
+        # Fallback right vector calculation
+        temp_right = turtle.dir.cross(turtle.right)
+        if temp_right.length < 0.0001:
+            temp_right = Vector((1, 0, 0))
+        branch_dir_turtle.right = temp_right.cross(branch_dir_turtle.dir)
 
+    # Final safety normalization
+    branch_dir_turtle.right.normalize()
+    branch_dir_turtle.dir.normalize()
+    
     return branch_dir_turtle
-
 
 def apply_tropism(turtle, tropism_vector):
     """Apply tropism_vector to turtle direction"""
@@ -1237,14 +1316,12 @@ def apply_tropism(turtle, tropism_vector):
     turtle.right.rotate(Quaternion(h_cross_t, radians(alpha)))
     turtle.right.normalize()
 
-
 def scale_bezier_handles_for_flare(stem, max_points_per_seg):
     """Reduce length of bezier handles to account for increased density of points on curve for
     flared base of trunk"""
     for point in stem.curve.bezier_points:
         point.handle_left = point.co + (point.handle_left - point.co) / max_points_per_seg
         point.handle_right = point.co + (point.handle_right - point.co) / max_points_per_seg
-
 
 def construct(params, seed=0, generate_leaves=True):
     """Construct the tree"""
